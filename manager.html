@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI캠프 사전미션 - 매니저</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎯</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="mgr-body">
+  <!-- 사이드바 -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <span class="sidebar-logo">SK Networks</span>
+      <span class="sidebar-logo-accent">AI Camp</span>
+      <span class="sidebar-cohort num" id="sidebarCohort"></span>
+    </div>
+    <nav class="sidebar-nav">
+      <button class="sidebar-item active" data-page="overview">
+        <span class="sidebar-icon">📊</span> 전체 현황
+      </button>
+      <button class="sidebar-item" data-page="problems">
+        <span class="sidebar-icon">📝</span> 문제 관리
+      </button>
+      <button class="sidebar-item" data-page="settings">
+        <span class="sidebar-icon">⚙️</span> 설정
+      </button>
+    </nav>
+    <div class="sidebar-footer">
+      <button id="logoutBtn" class="sidebar-logout">로그아웃</button>
+    </div>
+  </aside>
+
+  <!-- 모바일 헤더 -->
+  <header class="mgr-mobile-header" id="mobileHeader">
+    <button class="hamburger" id="hamburgerBtn">☰</button>
+    <span class="mgr-mobile-title">매니저 대시보드</span>
+    <button id="mobileLogoutBtn" class="btn btn-sm btn-outline">로그아웃</button>
+  </header>
+
+  <!-- 메인 콘텐츠 -->
+  <main class="mgr-main" id="mainContent"></main>
+
+  <!-- 개인 상세 모달 -->
+  <div id="detailModal" class="modal-overlay">
+    <div class="modal modal-lg">
+      <div class="modal-header">
+        <h2 id="detailModalTitle">수강생 상세</h2>
+        <button class="modal-close" id="detailModalClose">&times;</button>
+      </div>
+      <div class="modal-body" id="detailModalBody"></div>
+    </div>
+  </div>
+
+  <script src="data/missions.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/manager.js"></script>
+</body>
+</html>

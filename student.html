@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI캠프 사전미션 - 수강생</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎯</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- 헤더 -->
+  <header class="top-bar">
+    <div class="top-bar-left">
+      <span class="logo-sm">SK Networks <strong>AI Camp</strong></span>
+    </div>
+    <div class="top-bar-right">
+      <span class="user-greeting">안녕하세요, <strong id="studentName"></strong>님</span>
+      <button id="logoutBtn" class="btn btn-sm btn-outline">로그아웃</button>
+    </div>
+  </header>
+
+  <!-- 메인 -->
+  <main class="dashboard">
+    <!-- 전체 진행률 -->
+    <section class="overall-progress-section">
+      <div class="overall-progress-header">
+        <span class="overall-label">전체 진행률</span>
+        <span class="overall-value num" id="overallPercent">0%</span>
+      </div>
+      <div class="overall-bar">
+        <div class="overall-bar-fill" id="overallBar" style="width:0%"></div>
+      </div>
+      <div class="overall-stats">
+        <div class="overall-stat">
+          <span class="overall-stat-label">수강 완료</span>
+          <span class="overall-stat-value num" id="statWatched">0/0</span>
+        </div>
+        <div class="overall-stat">
+          <span class="overall-stat-label">퀴즈 합격</span>
+          <span class="overall-stat-value num" id="statQuiz">0/0</span>
+        </div>
+        <div class="overall-stat">
+          <span class="overall-stat-label">미션 제출</span>
+          <span class="overall-stat-value num" id="statMission">0/2</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 탭 -->
+    <nav class="tab-nav">
+      <div class="tab-list" id="tabList">
+        <button class="tab-btn active" data-tab="python">
+          <span class="tab-icon">🐍</span> Python 강의
+        </button>
+        <button class="tab-btn" data-tab="git">
+          <span class="tab-icon">🔀</span> Git 강의
+        </button>
+        <button class="tab-btn" data-tab="mathBasic">
+          <span class="tab-icon">📐</span> 사전미션(기본)
+        </button>
+        <button class="tab-btn" data-tab="mathAdv">
+          <span class="tab-icon">📊</span> 사전미션(심화)
+        </button>
+      </div>
+      <!-- 모바일 드롭다운 -->
+      <div class="tab-dropdown" id="tabDropdown">
+        <button class="tab-dropdown-btn" id="tabDropdownBtn">
+          <span id="tabDropdownLabel">🐍 Python 강의</span>
+          <span class="dropdown-arrow">▾</span>
+        </button>
+        <div class="tab-dropdown-menu" id="tabDropdownMenu">
+          <button class="tab-drop-item active" data-tab="python">🐍 Python 강의</button>
+          <button class="tab-drop-item" data-tab="git">🔀 Git 강의</button>
+          <button class="tab-drop-item" data-tab="mathBasic">📐 사전미션(기본)</button>
+          <button class="tab-drop-item" data-tab="mathAdv">📊 사전미션(심화)</button>
+        </div>
+      </div>
+    </nav>
+
+    <!-- 탭 콘텐츠 -->
+    <section class="tab-content" id="tabContent"></section>
+  </main>
+
+  <script src="data/missions.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/student.js"></script>
+</body>
+</html>

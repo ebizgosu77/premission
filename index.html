@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SK Networks AI캠프 - 사전미션 플랫폼</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎯</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="login-page">
+  <div class="login-container">
+    <div class="login-header">
+      <div class="logo">
+        <span class="logo-sk">SK Networks</span>
+        <span class="logo-ai">AI Camp</span>
+      </div>
+      <p class="login-subtitle">개강 전 사전미션 플랫폼</p>
+    </div>
+
+    <div class="login-cards">
+      <!-- 수강생 입장 -->
+      <div class="login-card">
+        <div class="card-icon">🎓</div>
+        <h2>수강생 입장</h2>
+        <p>사전미션을 학습하고 퀴즈를 풀어보세요.</p>
+        <form id="studentForm" class="login-form">
+          <div class="input-group">
+            <input type="text" id="studentName" placeholder="이름을 입력하세요" required autocomplete="off" maxlength="20">
+          </div>
+          <button type="submit" class="btn btn-accent">입장하기</button>
+        </form>
+      </div>
+
+      <!-- 매니저 입장 -->
+      <div class="login-card">
+        <div class="card-icon">🛡️</div>
+        <h2>매니저 입장</h2>
+        <p>수강생들의 학습 현황을 관리합니다.</p>
+        <form id="managerForm" class="login-form">
+          <div class="input-group">
+            <input type="password" id="managerPw" placeholder="비밀번호를 입력하세요" required>
+          </div>
+          <button type="submit" class="btn btn-blue">입장하기</button>
+        </form>
+      </div>
+    </div>
+
+    <footer class="login-footer">
+      <p>SK Networks AI Camp &copy; 2025</p>
+    </footer>
+  </div>
+
+  <script src="data/missions.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // 자동 리다이렉트
+      const session = Storage.getSession();
+      if (session) {
+        if (session.role === 'student') {
+          window.location.href = 'student.html';
+          return;
+        } else if (session.role === 'manager') {
+          window.location.href = 'manager.html';
+          return;
+        }
+      }
+
+      // 수강생 로그인
+      document.getElementById('studentForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const rawName = document.getElementById('studentName').value;
+        const validation = Storage.validateName(rawName);
+        if (!validation.valid) {
+          App.showToast(validation.msg, 'warning');
+          return;
+        }
+        const name = validation.name;
+
+        Storage.initStudent(name);
+        const data = Storage.getStudentData(name);
+        data.lastLogin = new Date().toISOString();
+        Storage.saveStudentData(name, data);
+
+        Storage.setSession('student', name);
+        window.location.href = 'student.html';
+      });
+
+      // 매니저 로그인
+      document.getElementById('managerForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const pw = document.getElementById('managerPw').value;
+        if (Storage.validateManager(pw)) {
+          Storage.setSession('manager', 'admin');
+          window.location.href = 'manager.html';
+        } else {
+          App.showToast('비밀번호가 올바르지 않습니다.', 'error');
+        }
+      });
+    });
+  </script>
+</body>
+</html>
