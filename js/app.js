@@ -111,5 +111,94 @@ const App = (() => {
     document.body.style.overflow = '';
   }
 
-  return { showToast, calcProgress, formatDate, logout, requireAuth, openModal, closeModal };
+  // ── 수학 표기 자동 변환 ──
+  // 2^3 → 2³, x_1 → x₁, sqrt → √ 등 자동 치환
+  const SUPERSCRIPT_MAP = {
+    '0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹',
+    '+':'⁺','-':'⁻','=':'⁼','(':'⁽',')':'⁾',
+    'n':'ⁿ','i':'ⁱ','x':'ˣ','y':'ʸ','a':'ᵃ','b':'ᵇ','c':'ᶜ','d':'ᵈ','e':'ᵉ',
+    'f':'ᶠ','g':'ᵍ','h':'ʰ','j':'ʲ','k':'ᵏ','l':'ˡ','m':'ᵐ','o':'ᵒ','p':'ᵖ',
+    'r':'ʳ','s':'ˢ','t':'ᵗ','u':'ᵘ','v':'ᵛ','w':'ʷ','z':'ᶻ',
+    'A':'ᴬ','B':'ᴮ','D':'ᴰ','E':'ᴱ','G':'ᴳ','H':'ᴴ','I':'ᴵ','J':'ᴶ','K':'ᴷ',
+    'L':'ᴸ','M':'ᴹ','N':'ᴺ','O':'ᴼ','P':'ᴾ','R':'ᴿ','T':'ᵀ','U':'ᵁ','V':'ⱽ','W':'ᵂ'
+  };
+  const SUBSCRIPT_MAP = {
+    '0':'₀','1':'₁','2':'₂','3':'₃','4':'₄','5':'₅','6':'₆','7':'₇','8':'₈','9':'₉',
+    '+':'₊','-':'₋','=':'₌','(':'₍',')':'₎',
+    'a':'ₐ','e':'ₑ','h':'ₕ','i':'ᵢ','j':'ⱼ','k':'ₖ','l':'ₗ','m':'ₘ','n':'ₙ',
+    'o':'ₒ','p':'ₚ','r':'ᵣ','s':'ₛ','t':'ₜ','u':'ᵤ','v':'ᵥ','x':'ₓ'
+  };
+
+  function convertMathNotation(text) {
+    if (!text) return '';
+
+    // 기호 치환
+    let result = text
+      .replace(/\*\*/g, '^')       // ** → ^ (Python 거듭제곱)
+      .replace(/sqrt\(([^)]+)\)/gi, '√($1)')
+      .replace(/sqrt/gi, '√')
+      .replace(/>=/g, '≥')
+      .replace(/<=/g, '≤')
+      .replace(/!=/g, '≠')
+      .replace(/\+-/g, '±')
+      .replace(/-\+/g, '∓')
+      .replace(/\.\.\./g, '⋯')
+      .replace(/infinity|inf/gi, '∞')
+      .replace(/\bpi\b/gi, 'π')
+      .replace(/\btheta\b/gi, 'θ')
+      .replace(/\balpha\b/gi, 'α')
+      .replace(/\bbeta\b/gi, 'β')
+      .replace(/\bgamma\b/gi, 'γ')
+      .replace(/\bdelta\b/gi, 'δ')
+      .replace(/\bsigma\b/gi, 'σ')
+      .replace(/\blambda\b/gi, 'λ')
+      .replace(/\bmu\b/gi, 'μ')
+      .replace(/\bepsilon\b/gi, 'ε')
+      .replace(/\bomega\b/gi, 'ω')
+      .replace(/\bSUM\b/g, '∑')
+      .replace(/\bsum\b/g, '∑')
+      .replace(/\bint\b/g, '∫')
+      .replace(/\bprod\b/gi, '∏')
+      .replace(/\bin\b/g, '∈')
+      .replace(/\bforall\b/gi, '∀')
+      .replace(/\bexists\b/gi, '∃')
+      .replace(/->/g, '→')
+      .replace(/=>/g, '⇒')
+      .replace(/<=>/g, '⇔');
+
+    // ^{...} 중괄호 그룹 위첨자
+    result = result.replace(/\^\{([^}]+)\}/g, (_, group) => {
+      return group.split('').map(ch => SUPERSCRIPT_MAP[ch] || ch).join('');
+    });
+
+    // ^단일문자 위첨자
+    result = result.replace(/\^([0-9a-zA-Z+\-=()])/g, (_, ch) => {
+      return SUPERSCRIPT_MAP[ch] || '^' + ch;
+    });
+
+    // _{...} 중괄호 그룹 아래첨자
+    result = result.replace(/_\{([^}]+)\}/g, (_, group) => {
+      return group.split('').map(ch => SUBSCRIPT_MAP[ch] || ch).join('');
+    });
+
+    // _단일문자 아래첨자
+    result = result.replace(/_([0-9a-zA-Z+\-=()])/g, (_, ch) => {
+      return SUBSCRIPT_MAP[ch] || '_' + ch;
+    });
+
+    return result;
+  }
+
+  // HTML 이스케이프 + 수학 변환 + 줄바꿈 처리
+  function renderMathHtml(text) {
+    if (!text) return '';
+    let escaped = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    escaped = convertMathNotation(escaped);
+    return escaped.replace(/\n/g, '<br>');
+  }
+
+  return {
+    showToast, calcProgress, formatDate, logout, requireAuth, openModal, closeModal,
+    convertMathNotation, renderMathHtml
+  };
 })();

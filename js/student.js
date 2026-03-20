@@ -360,56 +360,97 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ═══════════════════════════════════════
-  //  수학 미션 탭 (기본/심화)
+  //  수학 미션 탭 (기본/심화) — 문제별 개별 답안
   // ═══════════════════════════════════════
   function renderMathTab(container, missionKey) {
     const mission = missions[missionKey];
     const mProg = studentData.progress[missionKey] || {};
-    const draft = mProg.missionDraft || '';
     const submitted = !!mProg.missionSubmitted;
-    const submittedText = mProg.missionAnswer || '';
     const submittedAt = mProg.missionSubmittedAt || null;
 
     const label = missionKey === 'mathBasic' ? '기본' : '심화';
+    const problems = Storage.getMathProblems(missionKey);
 
-    // 문제 카드
-    const problemCard = document.createElement('div');
-    problemCard.className = 'math-problem-card';
+    // 문제별 답안 (객체: {1: "답1", 2: "답2"})
+    const drafts = mProg.missionDrafts || {};
+    const answers = mProg.missionAnswers || {};
+    // 하위 호환: 기존 단일 답안이 있으면 1번 문제 답안으로
+    if (!Object.keys(drafts).length && mProg.missionDraft) {
+      drafts['1'] = mProg.missionDraft;
+    }
+    if (!Object.keys(answers).length && mProg.missionAnswer) {
+      answers['1'] = mProg.missionAnswer;
+    }
 
-    // 매니저가 저장한 문제 텍스트 가져오기
-    const mgrProblem = Storage.getMathProblem(missionKey);
-
-    problemCard.innerHTML = `
+    // 헤더
+    const headerCard = document.createElement('div');
+    headerCard.className = 'math-problem-card';
+    headerCard.innerHTML = `
       <div class="math-header">
         <h2>${mission.icon} 사전미션 (${label})</h2>
         <p>${mission.description}</p>
       </div>
-      <div class="math-problem-body">
-        <h3>문제</h3>
-        <div class="math-problem-text">${mgrProblem ? escapeHtml(mgrProblem).replace(/\n/g, '<br>') : `📌 ${label}수학 문제는 매니저가 등록 예정입니다.`}</div>
-      </div>
     `;
-    container.appendChild(problemCard);
+    container.appendChild(headerCard);
 
-    // 답안 작성 영역
-    const answerCard = document.createElement('div');
-    answerCard.className = 'math-answer-card';
+    if (problems.length === 0) {
+      const emptyCard = document.createElement('div');
+      emptyCard.className = 'math-problem-card';
+      emptyCard.innerHTML = `<div class="math-problem-text">📌 ${label}수학 문제는 매니저가 등록 예정입니다.</div>`;
+      container.appendChild(emptyCard);
+      return;
+    }
 
     if (submitted) {
-      answerCard.innerHTML = `
+      // 제출 완료 상태: 문제 + 답안 보기
+      const badgeCard = document.createElement('div');
+      badgeCard.className = 'math-answer-card';
+      badgeCard.innerHTML = `
         <div class="math-submitted">
           <div class="math-submitted-badge">✅ 제출 완료 — 매니저에게 전달되었습니다</div>
           <div class="math-submitted-date num">${App.formatDate(submittedAt)}</div>
         </div>
-        <div class="math-answer-view">
-          <h3>제출한 답안</h3>
-          <div class="math-answer-text">${escapeHtml(submittedText)}</div>
-        </div>
       `;
+      container.appendChild(badgeCard);
+
+      problems.forEach((p, idx) => {
+        const card = document.createElement('div');
+        card.className = 'math-problem-card math-per-problem';
+        card.innerHTML = `
+          <div class="math-problem-body">
+            <h3>문제 ${idx + 1}</h3>
+            <div class="math-problem-text math-render">${App.renderMathHtml(p.text)}</div>
+          </div>
+          <div class="math-answer-view">
+            <h3>제출한 답안</h3>
+            <div class="math-answer-text math-render">${App.renderMathHtml(answers[String(p.id)] || answers[String(idx + 1)] || '(미작성)')}</div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
     } else {
-      answerCard.innerHTML = `
-        <h3>답안 작성</h3>
-        <textarea class="math-textarea" id="mathAnswer" placeholder="답안을 작성하세요...">${escapeHtml(draft)}</textarea>
+      // 작성 중 상태: 문제별 textarea
+      problems.forEach((p, idx) => {
+        const card = document.createElement('div');
+        card.className = 'math-problem-card math-per-problem';
+        const draftVal = drafts[String(p.id)] || drafts[String(idx + 1)] || '';
+        card.innerHTML = `
+          <div class="math-problem-body">
+            <h3>문제 ${idx + 1}</h3>
+            <div class="math-problem-text math-render">${App.renderMathHtml(p.text)}</div>
+          </div>
+          <div class="math-answer-input">
+            <h3>답안 ${idx + 1}</h3>
+            <textarea class="math-textarea math-per-answer" data-problem-id="${p.id}" placeholder="답안을 작성하세요...">${escapeHtml(draftVal)}</textarea>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+
+      // 액션 버튼
+      const actionsCard = document.createElement('div');
+      actionsCard.className = 'math-answer-card';
+      actionsCard.innerHTML = `
         <div class="math-actions">
           <div class="math-actions-left">
             <button class="btn btn-outline math-save-btn" id="mathSaveBtn">💾 임시저장</button>
@@ -418,51 +459,91 @@ document.addEventListener('DOMContentLoaded', () => {
           <button class="btn btn-accent math-submit-btn" id="mathSubmitBtn">🚀 최종 제출</button>
         </div>
       `;
-    }
+      container.appendChild(actionsCard);
 
-    container.appendChild(answerCard);
-
-    if (!submitted) {
       // 임시저장
       document.getElementById('mathSaveBtn').addEventListener('click', () => {
-        const val = document.getElementById('mathAnswer').value;
-        if (!studentData.progress[missionKey]) studentData.progress[missionKey] = { chapters: {} };
-        studentData.progress[missionKey].missionDraft = val;
-        Storage.saveStudentData(studentName, studentData);
+        saveMathDrafts(missionKey);
         document.getElementById('mathSaveStatus').textContent = `저장됨 (${new Date().toLocaleTimeString()})`;
         App.showToast('임시저장 완료', 'success');
       });
 
       // 최종 제출
       document.getElementById('mathSubmitBtn').addEventListener('click', () => {
-        const val = document.getElementById('mathAnswer').value.trim();
-        if (!val) {
-          App.showToast('답안을 작성해주세요.', 'warning');
+        const textareas = document.querySelectorAll('.math-per-answer');
+        let allFilled = true;
+        textareas.forEach(ta => {
+          if (!ta.value.trim()) allFilled = false;
+        });
+        if (!allFilled) {
+          App.showToast('모든 문제에 답안을 작성해주세요.', 'warning');
           return;
         }
         if (!confirm('최종 제출하시겠습니까?\n제출 후에는 수정할 수 없습니다.')) return;
 
+        const answersObj = {};
+        const draftsObj = {};
+        textareas.forEach(ta => {
+          const pid = ta.dataset.problemId;
+          answersObj[pid] = ta.value.trim();
+          draftsObj[pid] = ta.value.trim();
+        });
+
+        if (!studentData.progress[missionKey]) studentData.progress[missionKey] = { chapters: {} };
         studentData.progress[missionKey].missionSubmitted = true;
-        studentData.progress[missionKey].missionAnswer = val;
+        studentData.progress[missionKey].missionAnswers = answersObj;
+        studentData.progress[missionKey].missionDrafts = draftsObj;
         studentData.progress[missionKey].missionSubmittedAt = new Date().toISOString();
-        studentData.progress[missionKey].missionDraft = val;
+        // 하위 호환용 단일 필드도 저장
+        studentData.progress[missionKey].missionAnswer = Object.values(answersObj).join('\n---\n');
+        studentData.progress[missionKey].missionDraft = Object.values(draftsObj).join('\n---\n');
         Storage.saveStudentData(studentName, studentData);
         renderTabContent();
         App.showToast('최종 제출 완료!', 'success');
       });
 
-      // 자동 임시저장 (30초마다)
-      const textarea = document.getElementById('mathAnswer');
+      // 자동 임시저장 (3초)
       let autoSaveTimer = null;
-      textarea.addEventListener('input', () => {
-        if (autoSaveTimer) clearTimeout(autoSaveTimer);
-        autoSaveTimer = setTimeout(() => {
-          studentData.progress[missionKey].missionDraft = textarea.value;
-          Storage.saveStudentData(studentName, studentData);
-          document.getElementById('mathSaveStatus').textContent = `자동저장 (${new Date().toLocaleTimeString()})`;
-        }, 3000);
+      document.querySelectorAll('.math-per-answer').forEach(ta => {
+        ta.addEventListener('input', () => {
+          if (autoSaveTimer) clearTimeout(autoSaveTimer);
+          autoSaveTimer = setTimeout(() => {
+            saveMathDrafts(missionKey);
+            const statusEl = document.getElementById('mathSaveStatus');
+            if (statusEl) statusEl.textContent = `자동저장 (${new Date().toLocaleTimeString()})`;
+          }, 3000);
+        });
       });
     }
+
+    // KaTeX 렌더링
+    requestAnimationFrame(() => {
+      if (window.renderMathInElement) {
+        container.querySelectorAll('.math-render').forEach(el => {
+          renderMathInElement(el, {
+            delimiters: [
+              { left: '$$', right: '$$', display: true },
+              { left: '$', right: '$', display: false },
+              { left: '\\(', right: '\\)', display: false },
+              { left: '\\[', right: '\\]', display: true }
+            ],
+            throwOnError: false
+          });
+        });
+      }
+    });
+  }
+
+  function saveMathDrafts(missionKey) {
+    const textareas = document.querySelectorAll('.math-per-answer');
+    const draftsObj = {};
+    textareas.forEach(ta => {
+      draftsObj[ta.dataset.problemId] = ta.value;
+    });
+    if (!studentData.progress[missionKey]) studentData.progress[missionKey] = { chapters: {} };
+    studentData.progress[missionKey].missionDrafts = draftsObj;
+    studentData.progress[missionKey].missionDraft = Object.values(draftsObj).join('\n---\n');
+    Storage.saveStudentData(studentName, studentData);
   }
 
   // ── 유틸리티 ──

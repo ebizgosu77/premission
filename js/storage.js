@@ -166,15 +166,32 @@ const Storage = (() => {
   }
 
   // --- 문제 텍스트 (매니저 편집) ---
-  function getMathProblem(key) {
+  // 개별 문제 배열: [{id, text}]
+  function getMathProblems(key) {
     const data = _getJSON('aicamp_math_problems', {});
-    return data[key] || '';
+    const val = data[key];
+    // 하위 호환: 문자열이면 배열로 변환
+    if (typeof val === 'string' && val) {
+      return [{ id: 1, text: val }];
+    }
+    if (Array.isArray(val) && val.length > 0) return val;
+    return [];
+  }
+
+  function saveMathProblems(key, problems) {
+    const data = _getJSON('aicamp_math_problems', {});
+    data[key] = problems;
+    _setJSON('aicamp_math_problems', data);
+  }
+
+  // 하위 호환용 (단일 문자열)
+  function getMathProblem(key) {
+    const problems = getMathProblems(key);
+    return problems.map(p => p.text).join('\n');
   }
 
   function saveMathProblem(key, text) {
-    const data = _getJSON('aicamp_math_problems', {});
-    data[key] = text;
-    _setJSON('aicamp_math_problems', data);
+    saveMathProblems(key, [{ id: 1, text }]);
   }
 
   return {
@@ -184,6 +201,7 @@ const Storage = (() => {
     getManagerPassword, validateManager, setManagerPassword,
     getCohortName, setCohortName,
     getMathProblem, saveMathProblem,
+    getMathProblems, saveMathProblems,
     clearAllData
   };
 })();

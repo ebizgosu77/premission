@@ -1660,6 +1660,59 @@ a { color: var(--accent-blue); text-decoration: none; }
   word-break: break-word;
 }
 
+/* ── Per-problem layout (student) ── */
+.math-per-problem {
+  margin-bottom: 12px;
+}
+
+.math-per-problem .math-problem-body {
+  margin-bottom: 12px;
+}
+
+.math-per-problem .math-answer-input h3 {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--accent-blue);
+  margin-bottom: 8px;
+}
+
+.math-per-problem .math-textarea {
+  min-height: 120px;
+}
+
+/* ── Math rendering (KaTeX + Unicode) ── */
+.math-render,
+.math-problem-text {
+  font-family: 'STIX Two Math', 'Noto Sans KR', 'Cambria Math', 'Latin Modern Math', serif;
+  font-size: 15px;
+  line-height: 1.8;
+}
+
+.math-render .katex {
+  font-size: 1.1em;
+}
+
+/* ── Manager detail per-problem ── */
+.detail-math-per-problem {
+  margin-top: 12px;
+  padding: 12px;
+  background: var(--bg-card);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+
+.detail-math-q {
+  font-size: 13px;
+  color: var(--accent-orange);
+  font-weight: 600;
+  margin-bottom: 8px;
+  line-height: 1.6;
+}
+
+.detail-math-per-problem .detail-math-answer {
+  margin-top: 6px;
+}
+
 /* ══════════════════════════════════════════
    Manager Dashboard — Sidebar Layout
    ══════════════════════════════════════════ */
@@ -2179,6 +2232,73 @@ a { color: var(--accent-blue); text-decoration: none; }
 .mgr-problem-hint {
   font-size: 12px;
   color: var(--text-muted);
+}
+
+.mgr-problem-global-hint {
+  font-size: 12px;
+  color: var(--text-muted);
+  display: block;
+  margin-top: 4px;
+}
+
+.mgr-problem-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.mgr-problem-item {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+}
+
+.mgr-problem-item-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.mgr-problem-num {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--accent-orange);
+  flex: 1;
+}
+
+.mgr-preview-btn {
+  font-size: 11px !important;
+  padding: 4px 10px !important;
+}
+
+.mgr-remove-problem-btn {
+  font-size: 11px !important;
+  padding: 4px 8px !important;
+}
+
+.mgr-problem-preview {
+  margin-top: 10px;
+  padding: 14px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 15px;
+  line-height: 1.8;
+  color: var(--text-secondary);
+  font-family: 'STIX Two Math', 'Noto Sans KR', 'Cambria Math', serif;
+}
+
+.mgr-add-problem-btn {
+  margin-bottom: 16px;
+  width: 100%;
+  border-style: dashed;
+}
+
+.mgr-problem-input {
+  min-height: 120px;
 }
 
 .mgr-problem-textarea {

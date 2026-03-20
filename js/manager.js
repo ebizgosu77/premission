@@ -389,23 +389,49 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function renderMathDetail(data, key, title) {
     const mProg = data.progress?.[key] || {};
+    const problems = Storage.getMathProblems(key);
+    const answers = mProg.missionAnswers || {};
+    const drafts = mProg.missionDrafts || {};
+
     let html = `<div class="detail-section">`;
     html += `<h3>${title}</h3>`;
 
     if (mProg.missionSubmitted) {
-      html += `
-        <div class="detail-math-submitted">
-          <div class="detail-math-badge">✅ 제출 완료 <span class="detail-date">${App.formatDate(mProg.missionSubmittedAt)}</span></div>
-          <div class="detail-math-answer">${escHtml(mProg.missionAnswer || '')}</div>
-        </div>
-      `;
-    } else if (mProg.missionDraft) {
-      html += `
-        <div class="detail-math-draft">
-          <div class="detail-math-badge draft">📝 임시저장 (미제출)</div>
-          <div class="detail-math-answer">${escHtml(mProg.missionDraft)}</div>
-        </div>
-      `;
+      html += `<div class="detail-math-submitted">`;
+      html += `<div class="detail-math-badge">✅ 제출 완료 <span class="detail-date">${App.formatDate(mProg.missionSubmittedAt)}</span></div>`;
+
+      if (problems.length > 0 && Object.keys(answers).length > 0) {
+        problems.forEach((p, idx) => {
+          const ans = answers[String(p.id)] || answers[String(idx + 1)] || '';
+          html += `
+            <div class="detail-math-per-problem">
+              <div class="detail-math-q">문제 ${idx + 1}: ${App.renderMathHtml(p.text)}</div>
+              <div class="detail-math-answer">${escHtml(ans)}</div>
+            </div>
+          `;
+        });
+      } else {
+        html += `<div class="detail-math-answer">${escHtml(mProg.missionAnswer || '')}</div>`;
+      }
+      html += `</div>`;
+    } else if (mProg.missionDraft || Object.keys(drafts).length > 0) {
+      html += `<div class="detail-math-draft">`;
+      html += `<div class="detail-math-badge draft">📝 임시저장 (미제출)</div>`;
+
+      if (problems.length > 0 && Object.keys(drafts).length > 0) {
+        problems.forEach((p, idx) => {
+          const dft = drafts[String(p.id)] || drafts[String(idx + 1)] || '';
+          html += `
+            <div class="detail-math-per-problem">
+              <div class="detail-math-q">문제 ${idx + 1}: ${App.renderMathHtml(p.text)}</div>
+              <div class="detail-math-answer">${escHtml(dft) || '<em>미작성</em>'}</div>
+            </div>
+          `;
+        });
+      } else {
+        html += `<div class="detail-math-answer">${escHtml(mProg.missionDraft)}</div>`;
+      }
+      html += `</div>`;
     } else {
       html += `<p class="detail-empty">아직 작성하지 않았습니다.</p>`;
     }
@@ -418,22 +444,21 @@ document.addEventListener('DOMContentLoaded', () => {
   //  문제 관리
   // ══════════════════════════════════════════
   function renderProblems(container) {
-    const mathBasicText = Storage.getMathProblem('mathBasic');
-    const mathAdvText = Storage.getMathProblem('mathAdv');
-
     container.innerHTML = `
       <div class="mgr-page-header">
         <h1>📝 문제 관리</h1>
+        <span class="mgr-problem-global-hint">수학기호: $x^2$, \\\\frac{a}{b}, \\\\sqrt{x} 등 LaTeX 문법 또는 한글(HWP)에서 복사한 수식을 그대로 붙여넣을 수 있습니다.</span>
       </div>
 
       <div class="mgr-problem-card">
         <div class="mgr-problem-header">
           <h2>📐 기본수학 문제</h2>
-          <span class="mgr-problem-hint">수강생에게 표시되는 문제 내용을 편집하세요.</span>
+          <span class="mgr-problem-hint">문제별로 개별 입력하세요. 미리보기에서 수학기호를 확인할 수 있습니다.</span>
         </div>
-        <textarea class="mgr-problem-textarea" id="mathBasicInput" placeholder="기본수학 문제를 입력하세요...&#10;&#10;예시:&#10;1. 다음 행렬의 곱을 구하시오.&#10;2. 벡터 (3, 4)의 크기를 구하시오.">${escHtml(mathBasicText)}</textarea>
+        <div id="mathBasicList" class="mgr-problem-list"></div>
+        <button class="btn btn-outline mgr-add-problem-btn" id="addBasicBtn">+ 문제 추가</button>
         <div class="mgr-problem-actions">
-          <button class="btn btn-accent" id="saveBasicBtn">💾 저장하기</button>
+          <button class="btn btn-accent" id="saveBasicBtn">💾 전체 저장</button>
           <span class="mgr-save-status" id="saveBasicStatus"></span>
         </div>
       </div>
@@ -441,27 +466,130 @@ document.addEventListener('DOMContentLoaded', () => {
       <div class="mgr-problem-card">
         <div class="mgr-problem-header">
           <h2>📊 심화수학 문제</h2>
-          <span class="mgr-problem-hint">수강생에게 표시되는 문제 내용을 편집하세요.</span>
+          <span class="mgr-problem-hint">문제별로 개별 입력하세요. 미리보기에서 수학기호를 확인할 수 있습니다.</span>
         </div>
-        <textarea class="mgr-problem-textarea" id="mathAdvInput" placeholder="심화수학 문제를 입력하세요...&#10;&#10;예시:&#10;1. f(x) = x³ + 2x의 도함수를 구하시오.&#10;2. 경사하강법의 원리를 서술하시오.">${escHtml(mathAdvText)}</textarea>
+        <div id="mathAdvList" class="mgr-problem-list"></div>
+        <button class="btn btn-outline mgr-add-problem-btn" id="addAdvBtn">+ 문제 추가</button>
         <div class="mgr-problem-actions">
-          <button class="btn btn-accent" id="saveAdvBtn">💾 저장하기</button>
+          <button class="btn btn-accent" id="saveAdvBtn">💾 전체 저장</button>
           <span class="mgr-save-status" id="saveAdvStatus"></span>
         </div>
       </div>
     `;
 
+    // 기존 데이터 로드
+    renderProblemItems('mathBasic');
+    renderProblemItems('mathAdv');
+
+    // 문제 추가 버튼
+    document.getElementById('addBasicBtn').addEventListener('click', () => addProblemItem('mathBasic'));
+    document.getElementById('addAdvBtn').addEventListener('click', () => addProblemItem('mathAdv'));
+
+    // 저장 버튼
     document.getElementById('saveBasicBtn').addEventListener('click', () => {
-      Storage.saveMathProblem('mathBasic', document.getElementById('mathBasicInput').value);
+      saveProblemItems('mathBasic');
       document.getElementById('saveBasicStatus').textContent = `저장 완료 (${new Date().toLocaleTimeString()})`;
       App.showToast('기본수학 문제가 저장되었습니다.', 'success');
     });
 
     document.getElementById('saveAdvBtn').addEventListener('click', () => {
-      Storage.saveMathProblem('mathAdv', document.getElementById('mathAdvInput').value);
+      saveProblemItems('mathAdv');
       document.getElementById('saveAdvStatus').textContent = `저장 완료 (${new Date().toLocaleTimeString()})`;
       App.showToast('심화수학 문제가 저장되었습니다.', 'success');
     });
+  }
+
+  function renderProblemItems(key) {
+    const listEl = document.getElementById(key === 'mathBasic' ? 'mathBasicList' : 'mathAdvList');
+    const problems = Storage.getMathProblems(key);
+    listEl.innerHTML = '';
+
+    if (problems.length === 0) {
+      addProblemItem(key);
+      return;
+    }
+
+    problems.forEach((p, idx) => {
+      appendProblemRow(listEl, key, idx + 1, p.text);
+    });
+  }
+
+  function addProblemItem(key) {
+    const listEl = document.getElementById(key === 'mathBasic' ? 'mathBasicList' : 'mathAdvList');
+    const count = listEl.querySelectorAll('.mgr-problem-item').length;
+    appendProblemRow(listEl, key, count + 1, '');
+  }
+
+  function appendProblemRow(listEl, key, num, text) {
+    const item = document.createElement('div');
+    item.className = 'mgr-problem-item';
+    item.innerHTML = `
+      <div class="mgr-problem-item-header">
+        <span class="mgr-problem-num">문제 ${num}</span>
+        <button class="btn btn-sm btn-outline mgr-preview-btn" title="미리보기 토글">👁 미리보기</button>
+        <button class="btn btn-sm btn-danger mgr-remove-problem-btn" title="삭제">✕</button>
+      </div>
+      <textarea class="mgr-problem-textarea mgr-problem-input" placeholder="문제를 입력하세요...&#10;&#10;수학기호 예시: $x^2 + y^2 = r^2$, $\\frac{dy}{dx}$, $\\sum_{i=1}^{n} x_i$&#10;한글(HWP) 수식도 그대로 붙여넣기 가능합니다.">${escHtml(text)}</textarea>
+      <div class="mgr-problem-preview" style="display:none;"></div>
+    `;
+    listEl.appendChild(item);
+
+    // 미리보기 토글
+    item.querySelector('.mgr-preview-btn').addEventListener('click', () => {
+      const previewEl = item.querySelector('.mgr-problem-preview');
+      const textarea = item.querySelector('.mgr-problem-input');
+      if (previewEl.style.display === 'none') {
+        previewEl.style.display = 'block';
+        previewEl.innerHTML = renderMathText(textarea.value);
+        if (window.renderMathInElement) {
+          renderMathInElement(previewEl, {
+            delimiters: [
+              { left: '$$', right: '$$', display: true },
+              { left: '$', right: '$', display: false },
+              { left: '\\(', right: '\\)', display: false },
+              { left: '\\[', right: '\\]', display: true }
+            ],
+            throwOnError: false
+          });
+        }
+      } else {
+        previewEl.style.display = 'none';
+      }
+    });
+
+    // 삭제 버튼
+    item.querySelector('.mgr-remove-problem-btn').addEventListener('click', () => {
+      if (listEl.querySelectorAll('.mgr-problem-item').length <= 1) {
+        App.showToast('최소 1개의 문제가 필요합니다.', 'warning');
+        return;
+      }
+      item.remove();
+      renumberProblems(listEl);
+    });
+  }
+
+  function renumberProblems(listEl) {
+    listEl.querySelectorAll('.mgr-problem-item').forEach((item, idx) => {
+      item.querySelector('.mgr-problem-num').textContent = `문제 ${idx + 1}`;
+    });
+  }
+
+  function saveProblemItems(key) {
+    const listEl = document.getElementById(key === 'mathBasic' ? 'mathBasicList' : 'mathAdvList');
+    const items = listEl.querySelectorAll('.mgr-problem-input');
+    const problems = [];
+    items.forEach((textarea, idx) => {
+      const text = textarea.value.trim();
+      if (text) {
+        problems.push({ id: idx + 1, text });
+      }
+    });
+    Storage.saveMathProblems(key, problems);
+  }
+
+  function renderMathText(text) {
+    if (!text) return '';
+    return App.renderMathHtml(text);
   }
 
   // ══════════════════════════════════════════
