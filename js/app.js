@@ -190,10 +190,42 @@ const App = (() => {
   }
 
   // HTML 이스케이프 + 수학 변환 + 줄바꿈 처리
+  // LaTeX 구간($...$, $$...$$, \(...\), \[...\])은 변환하지 않고 보존
   function renderMathHtml(text) {
     if (!text) return '';
     let escaped = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+    // LaTeX 구간을 플레이스홀더로 치환 후 convertMathNotation 적용
+    const latexBlocks = [];
+    const placeholder = '\x00LATEX';
+
+    // $$...$$ (display math)
+    escaped = escaped.replace(/\$\$[\s\S]*?\$\$/g, (match) => {
+      latexBlocks.push(match);
+      return placeholder + (latexBlocks.length - 1) + '\x00';
+    });
+    // $...$ (inline math, 줄바꿈 없는 것만)
+    escaped = escaped.replace(/\$(?!\$)([^\n$]+?)\$/g, (match) => {
+      latexBlocks.push(match);
+      return placeholder + (latexBlocks.length - 1) + '\x00';
+    });
+    // \[...\] (display)
+    escaped = escaped.replace(/\\\[[\s\S]*?\\\]/g, (match) => {
+      latexBlocks.push(match);
+      return placeholder + (latexBlocks.length - 1) + '\x00';
+    });
+    // \(...\) (inline)
+    escaped = escaped.replace(/\\\([\s\S]*?\\\)/g, (match) => {
+      latexBlocks.push(match);
+      return placeholder + (latexBlocks.length - 1) + '\x00';
+    });
+
+    // LaTeX가 아닌 부분만 수학 기호 변환
     escaped = convertMathNotation(escaped);
+
+    // 플레이스홀더 복원
+    escaped = escaped.replace(/\x00LATEX(\d+)\x00/g, (_, idx) => latexBlocks[parseInt(idx)]);
+
     return escaped.replace(/\n/g, '<br>');
   }
 
