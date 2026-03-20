@@ -401,6 +401,10 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
+    // 첨부파일 (객체: {1: [{name, data, type}], 2: [...]})
+    const attachments = mProg.missionAttachments || {};
+    const submittedAttachments = mProg.missionSubmittedAttachments || {};
+
     if (submitted) {
       // 제출 완료 상태: 문제 + 답안 보기
       const badgeCard = document.createElement('div');
@@ -414,6 +418,16 @@ document.addEventListener('DOMContentLoaded', () => {
       container.appendChild(badgeCard);
 
       problems.forEach((p, idx) => {
+        const pid = String(p.id);
+        const files = submittedAttachments[pid] || submittedAttachments[String(idx + 1)] || [];
+        let attachHtml = '';
+        if (files.length > 0) {
+          attachHtml = `<div class="math-attachments-view"><h3>첨부 이미지</h3><div class="math-attach-list">`;
+          files.forEach(f => {
+            attachHtml += `<div class="math-attach-item"><img src="${f.data}" alt="${escapeHtml(f.name)}" class="math-attach-img"><span class="math-attach-name">${escapeHtml(f.name)}</span></div>`;
+          });
+          attachHtml += `</div></div>`;
+        }
         const card = document.createElement('div');
         card.className = 'math-problem-card math-per-problem';
         card.innerHTML = `
@@ -425,15 +439,35 @@ document.addEventListener('DOMContentLoaded', () => {
             <h3>제출한 답안</h3>
             <div class="math-answer-text math-render">${App.renderMathHtml(answers[String(p.id)] || answers[String(idx + 1)] || '(미작성)')}</div>
           </div>
+          ${attachHtml}
         `;
         container.appendChild(card);
       });
     } else {
-      // 작성 중 상태: 문제별 textarea
+      // 작성 중 상태: 문제별 textarea + 파일 첨부
       problems.forEach((p, idx) => {
+        const pid = String(p.id);
         const card = document.createElement('div');
         card.className = 'math-problem-card math-per-problem';
-        const draftVal = drafts[String(p.id)] || drafts[String(idx + 1)] || '';
+        const draftVal = drafts[pid] || drafts[String(idx + 1)] || '';
+        const files = attachments[pid] || [];
+
+        let previewHtml = '';
+        if (files.length > 0) {
+          previewHtml = `<div class="math-attach-list">`;
+          files.forEach((f, fi) => {
+            previewHtml += `
+              <div class="math-attach-item">
+                <img src="${f.data}" alt="${escapeHtml(f.name)}" class="math-attach-img">
+                <div class="math-attach-info">
+                  <span class="math-attach-name">${escapeHtml(f.name)}</span>
+                  <button class="btn btn-sm btn-danger math-attach-remove" data-problem-id="${pid}" data-file-idx="${fi}">삭제</button>
+                </div>
+              </div>`;
+          });
+          previewHtml += `</div>`;
+        }
+
         card.innerHTML = `
           <div class="math-problem-body">
             <h3>문제 ${idx + 1}</h3>
@@ -442,6 +476,14 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="math-answer-input">
             <h3>답안 ${idx + 1}</h3>
             <textarea class="math-textarea math-per-answer" data-problem-id="${p.id}" placeholder="답안을 작성하세요...">${escapeHtml(draftVal)}</textarea>
+            <div class="math-attach-section" data-problem-id="${pid}">
+              <label class="btn btn-sm btn-outline math-attach-btn">
+                📎 캡쳐/이미지 첨부
+                <input type="file" accept="image/*" multiple class="math-file-input" data-problem-id="${pid}" hidden>
+              </label>
+              <span class="math-attach-hint">PNG, JPG 등 이미지 파일 (여러 장 가능)</span>
+              ${previewHtml}
+            </div>
           </div>
         `;
         container.appendChild(card);
@@ -460,6 +502,67 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
       `;
       container.appendChild(actionsCard);
+
+      // 파일 첨부 이벤트
+      container.querySelectorAll('.math-file-input').forEach(input => {
+        input.addEventListener('change', (e) => {
+          const pid = input.dataset.problemId;
+          const files = Array.from(e.target.files);
+          if (!files.length) return;
+
+          const currentAttachments = studentData.progress[missionKey].missionAttachments || {};
+          if (!currentAttachments[pid]) currentAttachments[pid] = [];
+
+          let loaded = 0;
+          files.forEach(file => {
+            if (!file.type.startsWith('image/')) {
+              App.showToast('이미지 파일만 첨부 가능합니다.', 'warning');
+              return;
+            }
+            if (file.size > 5 * 1024 * 1024) {
+              App.showToast(`${file.name}: 5MB 이하 파일만 가능합니다.`, 'warning');
+              return;
+            }
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+              currentAttachments[pid].push({
+                name: file.name,
+                data: ev.target.result,
+                type: file.type
+              });
+              loaded++;
+              if (loaded === files.length) {
+                studentData.progress[missionKey].missionAttachments = currentAttachments;
+                try {
+                  Storage.saveStudentData(studentName, studentData);
+                  renderTabContent();
+                  App.showToast(`이미지 ${files.length}개 첨부됨`, 'success');
+                } catch (err) {
+                  currentAttachments[pid].splice(-loaded);
+                  App.showToast('저장 공간이 부족합니다. 이미지 크기를 줄여주세요.', 'error');
+                }
+              }
+            };
+            reader.readAsDataURL(file);
+          });
+        });
+      });
+
+      // 첨부 삭제 이벤트
+      container.querySelectorAll('.math-attach-remove').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const pid = btn.dataset.problemId;
+          const fi = parseInt(btn.dataset.fileIdx);
+          const currentAttachments = studentData.progress[missionKey].missionAttachments || {};
+          if (currentAttachments[pid]) {
+            currentAttachments[pid].splice(fi, 1);
+            studentData.progress[missionKey].missionAttachments = currentAttachments;
+            Storage.saveStudentData(studentName, studentData);
+            renderTabContent();
+            App.showToast('첨부 이미지 삭제됨', 'info');
+          }
+        });
+      });
 
       // 임시저장
       document.getElementById('mathSaveBtn').addEventListener('click', () => {
@@ -494,6 +597,9 @@ document.addEventListener('DOMContentLoaded', () => {
         studentData.progress[missionKey].missionAnswers = answersObj;
         studentData.progress[missionKey].missionDrafts = draftsObj;
         studentData.progress[missionKey].missionSubmittedAt = new Date().toISOString();
+        // 첨부파일도 제출 상태로 복사
+        studentData.progress[missionKey].missionSubmittedAttachments =
+          JSON.parse(JSON.stringify(studentData.progress[missionKey].missionAttachments || {}));
         // 하위 호환용 단일 필드도 저장
         studentData.progress[missionKey].missionAnswer = Object.values(answersObj).join('\n---\n');
         studentData.progress[missionKey].missionDraft = Object.values(draftsObj).join('\n---\n');

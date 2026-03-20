@@ -1680,6 +1680,86 @@ a { color: var(--accent-blue); text-decoration: none; }
   min-height: 120px;
 }
 
+/* ── Math Attachments ── */
+.math-attach-section {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.math-attach-btn {
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.math-attach-hint {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.math-attach-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.math-attach-item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  max-width: 220px;
+}
+
+.math-attach-img {
+  width: 100%;
+  max-width: 200px;
+  max-height: 180px;
+  object-fit: contain;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.math-attach-img:hover {
+  transform: scale(1.02);
+}
+
+.math-attach-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.math-attach-name {
+  font-size: 11px;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 140px;
+}
+
+.math-attachments-view {
+  margin-top: 16px;
+}
+
+.math-attachments-view h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--accent-blue);
+  margin-bottom: 10px;
+}
+
 /* ── Math rendering (KaTeX + Unicode) ── */
 .math-render,
 .math-problem-text {
