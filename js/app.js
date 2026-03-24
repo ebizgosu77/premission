@@ -193,7 +193,21 @@ const App = (() => {
   // LaTeX 구간($...$, $$...$$, \(...\), \[...\])은 변환하지 않고 보존
   function renderMathHtml(text) {
     if (!text) return '';
-    let escaped = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+    // ChatGPT 복사 보정: 행렬 등에서 \ + 줄바꿈 → \\ (LaTeX 줄바꿈)
+    let fixed = text.replace(/(\\begin\{[^}]+\}[\s\S]*?\\end\{[^}]+\})/g, (block) => {
+      return block.replace(/\\\n/g, '\\\\\n');
+    });
+
+    // ChatGPT 복사 보정: 멀티라인 $...$ → $$...$$ (display math)
+    fixed = fixed.replace(/\$(?!\$)([\s\S]*?)\$(?!\$)/g, (match, inner) => {
+      if (inner.includes('\n') && (inner.includes('\\begin') || inner.includes('\\frac') || inner.includes('\\sum'))) {
+        return '$$' + inner + '$$';
+      }
+      return match;
+    });
+
+    let escaped = fixed.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
     // LaTeX 구간을 플레이스홀더로 치환 후 convertMathNotation 적용
     const latexBlocks = [];
