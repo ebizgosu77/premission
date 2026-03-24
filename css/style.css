@@ -2330,14 +2330,20 @@ a { color: var(--accent-blue); text-decoration: none; }
 
 .mgr-answer-preview {
   margin-top: 8px;
-  padding: 14px;
+  padding: 20px;
   background: rgba(46, 204, 113, 0.08);
   border: 1px solid var(--accent-green);
   border-radius: var(--radius-sm);
-  font-size: 15px;
-  line-height: 1.8;
+  font-size: 16px;
+  line-height: 2;
   color: var(--text-secondary);
   font-family: 'STIX Two Math', 'Noto Sans KR', 'Cambria Math', serif;
+  overflow-x: auto;
+}
+
+.mgr-answer-preview .katex-display {
+  margin: 16px 0;
+  overflow-x: auto;
 }
 
 .mgr-answer-input::placeholder {
@@ -2359,13 +2365,19 @@ a { color: var(--accent-blue); text-decoration: none; }
 /* ── Detail: 모범답안 표시 ── */
 .detail-model-answer {
   margin-top: 6px;
-  padding: 10px 14px;
+  padding: 16px;
   background: rgba(46, 204, 113, 0.08);
   border-left: 3px solid var(--accent-green);
   border-radius: var(--radius-sm);
-  font-size: 13px;
-  line-height: 1.7;
+  font-size: 15px;
+  line-height: 1.9;
   color: var(--text-secondary);
+  overflow-x: auto;
+}
+
+.detail-model-answer .katex-display {
+  margin: 12px 0;
+  overflow-x: auto;
 }
 
 .detail-model-label {
