@@ -2302,6 +2302,42 @@ a { color: var(--accent-blue); text-decoration: none; }
   padding: 10px 0;
 }
 
+/* ── 모범답안 입력 (문제 관리) ── */
+.mgr-answer-input {
+  min-height: 80px !important;
+  border-left: 3px solid var(--accent-green) !important;
+  margin-top: 8px;
+}
+
+.mgr-answer-input::placeholder {
+  color: var(--accent-green);
+  opacity: 0.6;
+}
+
+/* ── Detail: 모범답안 표시 ── */
+.detail-model-answer {
+  margin-top: 6px;
+  padding: 10px 14px;
+  background: rgba(46, 204, 113, 0.08);
+  border-left: 3px solid var(--accent-green);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--text-secondary);
+}
+
+.detail-model-label {
+  font-weight: 700;
+  color: var(--accent-green);
+}
+
+.detail-student-answer-label {
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent-orange);
+}
+
 /* ── Detail: 첨부 이미지 ── */
 .detail-attach-list {
   display: flex;

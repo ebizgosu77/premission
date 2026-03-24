@@ -498,6 +498,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         html += `<div class="detail-math-per-problem">`;
         html += `<div class="detail-math-q">문제 ${idx + 1}: ${App.renderMathHtml(p.text)}</div>`;
 
+        // 모범답안
+        if (p.answer) {
+          html += `<div class="detail-model-answer"><span class="detail-model-label">모범답안:</span> ${App.renderMathHtml(p.answer)}</div>`;
+        }
+
+        // 학생 답안
+        html += `<div class="detail-student-answer-label">학생 답안:</div>`;
         if (answerText) {
           html += `<div class="detail-math-answer">${escHtml(answerText)}</div>`;
         } else {
@@ -604,17 +611,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     problems.forEach((p, idx) => {
-      appendProblemRow(listEl, key, idx + 1, p.text);
+      appendProblemRow(listEl, key, idx + 1, p.text, p.answer || '');
     });
   }
 
   function addProblemItem(key) {
     const listEl = document.getElementById(key === 'mathBasic' ? 'mathBasicList' : 'mathAdvList');
     const count = listEl.querySelectorAll('.mgr-problem-item').length;
-    appendProblemRow(listEl, key, count + 1, '');
+    appendProblemRow(listEl, key, count + 1, '', '');
   }
 
-  function appendProblemRow(listEl, key, num, text) {
+  function appendProblemRow(listEl, key, num, text, answer) {
     const item = document.createElement('div');
     item.className = 'mgr-problem-item';
     item.innerHTML = `
@@ -624,6 +631,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         <button class="btn btn-sm btn-danger mgr-remove-problem-btn" title="삭제">✕</button>
       </div>
       <textarea class="mgr-problem-textarea mgr-problem-input" placeholder="문제를 입력하세요...&#10;&#10;수학기호 예시: $x^2 + y^2 = r^2$, $\\frac{dy}{dx}$, $\\sum_{i=1}^{n} x_i$&#10;한글(HWP) 수식도 그대로 붙여넣기 가능합니다.">${escHtml(text)}</textarea>
+      <textarea class="mgr-problem-textarea mgr-answer-input" placeholder="모범답안을 입력하세요...">${escHtml(answer)}</textarea>
       <div class="mgr-problem-preview" style="display:none;"></div>
     `;
     listEl.appendChild(item);
@@ -670,12 +678,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   function saveProblemItems(key) {
     const listEl = document.getElementById(key === 'mathBasic' ? 'mathBasicList' : 'mathAdvList');
-    const items = listEl.querySelectorAll('.mgr-problem-input');
+    const items = listEl.querySelectorAll('.mgr-problem-item');
     const problems = [];
-    items.forEach((textarea, idx) => {
-      const text = textarea.value.trim();
+    items.forEach((item, idx) => {
+      const text = item.querySelector('.mgr-problem-input').value.trim();
+      const answer = item.querySelector('.mgr-answer-input').value.trim();
       if (text) {
-        problems.push({ id: idx + 1, text });
+        problems.push({ id: idx + 1, text, answer });
       }
     });
     Storage.saveMathProblems(key, problems);
