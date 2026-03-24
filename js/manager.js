@@ -646,7 +646,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         <button class="btn btn-sm btn-danger mgr-remove-problem-btn" title="삭제">✕</button>
       </div>
       <textarea class="mgr-problem-textarea mgr-problem-input" placeholder="문제를 입력하세요...&#10;&#10;수학기호 예시: $x^2 + y^2 = r^2$, $\\frac{dy}{dx}$, $\\sum_{i=1}^{n} x_i$&#10;한글(HWP) 수식도 그대로 붙여넣기 가능합니다.">${escHtml(text)}</textarea>
+      <div class="mgr-answer-header">
+        <span class="mgr-answer-label">모범답안</span>
+        <button class="btn btn-sm btn-outline mgr-answer-preview-btn" title="모범답안 미리보기">👁 미리보기</button>
+      </div>
       <textarea class="mgr-problem-textarea mgr-answer-input" placeholder="모범답안을 입력하세요...">${escHtml(answer)}</textarea>
+      <div class="mgr-answer-preview" style="display:none;"></div>
       <div class="mgr-problem-preview" style="display:none;"></div>
     `;
     listEl.appendChild(item);
@@ -663,6 +668,29 @@ document.addEventListener('DOMContentLoaded', async () => {
           previewHtml += `<div class="mgr-preview-section mgr-preview-answer"><strong>모범답안:</strong><br>${renderMathText(answerArea.value)}</div>`;
         }
         previewEl.innerHTML = previewHtml;
+        if (window.renderMathInElement) {
+          renderMathInElement(previewEl, {
+            delimiters: [
+              { left: '$$', right: '$$', display: true },
+              { left: '$', right: '$', display: false },
+              { left: '\\(', right: '\\)', display: false },
+              { left: '\\[', right: '\\]', display: true }
+            ],
+            throwOnError: false
+          });
+        }
+      } else {
+        previewEl.style.display = 'none';
+      }
+    });
+
+    // 모범답안 미리보기
+    item.querySelector('.mgr-answer-preview-btn').addEventListener('click', () => {
+      const previewEl = item.querySelector('.mgr-answer-preview');
+      const answerArea = item.querySelector('.mgr-answer-input');
+      if (previewEl.style.display === 'none') {
+        previewEl.style.display = 'block';
+        previewEl.innerHTML = renderMathText(answerArea.value) || '<em>모범답안이 비어있습니다.</em>';
         if (window.renderMathInElement) {
           renderMathInElement(previewEl, {
             delimiters: [

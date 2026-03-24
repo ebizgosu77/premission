@@ -2309,6 +2309,37 @@ a { color: var(--accent-blue); text-decoration: none; }
   margin-top: 8px;
 }
 
+.mgr-answer-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+  margin-bottom: 4px;
+}
+
+.mgr-answer-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent-green);
+}
+
+.mgr-answer-preview-btn {
+  font-size: 11px !important;
+  padding: 3px 8px !important;
+}
+
+.mgr-answer-preview {
+  margin-top: 8px;
+  padding: 14px;
+  background: rgba(46, 204, 113, 0.08);
+  border: 1px solid var(--accent-green);
+  border-radius: var(--radius-sm);
+  font-size: 15px;
+  line-height: 1.8;
+  color: var(--text-secondary);
+  font-family: 'STIX Two Math', 'Noto Sans KR', 'Cambria Math', serif;
+}
+
 .mgr-answer-input::placeholder {
   color: var(--accent-green);
   opacity: 0.6;
