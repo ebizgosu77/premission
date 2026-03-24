@@ -405,6 +405,41 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     body.innerHTML = html;
     App.openModal(modal);
+
+    // 채점 저장 버튼 이벤트
+    body.querySelectorAll('.detail-save-scores-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const mKey = btn.dataset.key;
+        const sName = btn.dataset.name;
+        const section = btn.closest('.detail-section');
+        const inputs = section.querySelectorAll('.detail-score-input');
+        const studentData = Storage.getStudentData(sName);
+        if (!studentData) return;
+
+        if (!studentData.progress[mKey].scores) studentData.progress[mKey].scores = {};
+
+        let total = 0, count = 0;
+        inputs.forEach(input => {
+          const pid = input.dataset.problemId;
+          const val = input.value.trim();
+          if (val !== '') {
+            const score = Math.max(0, Math.min(100, parseInt(val) || 0));
+            studentData.progress[mKey].scores[pid] = score;
+            total += score;
+            count++;
+          } else {
+            delete studentData.progress[mKey].scores[pid];
+          }
+        });
+
+        studentData.progress[mKey].totalScore = count > 0 ? Math.round(total / count) : null;
+        Storage.saveStudentData(sName, studentData);
+
+        const status = section.querySelector('.detail-score-status');
+        if (status) status.textContent = `저장 완료 (${new Date().toLocaleTimeString()})`;
+        App.showToast('채점이 저장되었습니다.', 'success');
+      });
+    });
   }
 
   function renderMathDetail(data, key, title) {
@@ -412,9 +447,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     const problems = Storage.getMathProblems(key);
     const answers = mProg.missionAnswers || {};
     const drafts = mProg.missionDrafts || {};
+    const submittedAttachments = mProg.missionSubmittedAttachments || {};
+    const scores = mProg.scores || {};
+    const totalScore = mProg.totalScore;
 
-    let html = `<div class="detail-section">`;
-    html += `<h3>${title}</h3>`;
+    let html = `<div class="detail-section" data-math-key="${key}" data-student-name="${escHtml(data.name)}">`;
+    html += `<h3>${title}`;
+    if (typeof totalScore === 'number') {
+      html += ` <span class="detail-total-score num">${totalScore}점</span>`;
+    }
+    html += `</h3>`;
 
     if (mProg.missionSubmitted) {
       html += `<div class="detail-math-submitted">`;
@@ -422,17 +464,46 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       if (problems.length > 0 && Object.keys(answers).length > 0) {
         problems.forEach((p, idx) => {
-          const ans = answers[String(p.id)] || answers[String(idx + 1)] || '';
-          html += `
-            <div class="detail-math-per-problem">
-              <div class="detail-math-q">문제 ${idx + 1}: ${App.renderMathHtml(p.text)}</div>
-              <div class="detail-math-answer">${escHtml(ans)}</div>
-            </div>
-          `;
+          const pid = String(p.id);
+          const ans = answers[pid] || answers[String(idx + 1)] || '';
+          const files = submittedAttachments[pid] || submittedAttachments[String(idx + 1)] || [];
+          const score = scores[pid];
+
+          html += `<div class="detail-math-per-problem">`;
+          html += `<div class="detail-math-q">문제 ${idx + 1}: ${App.renderMathHtml(p.text)}</div>`;
+
+          if (ans) {
+            html += `<div class="detail-math-answer">${escHtml(ans)}</div>`;
+          }
+
+          // 첨부 이미지 표시
+          if (files.length > 0) {
+            html += `<div class="detail-attach-list">`;
+            files.forEach(f => {
+              html += `<div class="detail-attach-item"><img src="${f.data}" alt="${escHtml(f.name)}" class="detail-attach-img" onclick="this.classList.toggle('expanded')"></div>`;
+            });
+            html += `</div>`;
+          }
+
+          // 채점 입력
+          html += `<div class="detail-score-row">`;
+          html += `<label>점수:</label>`;
+          html += `<input type="number" class="detail-score-input" data-problem-id="${pid}" value="${typeof score === 'number' ? score : ''}" min="0" max="100" placeholder="미채점">`;
+          html += `<span class="detail-score-unit">점</span>`;
+          html += `</div>`;
+
+          html += `</div>`;
         });
       } else {
         html += `<div class="detail-math-answer">${escHtml(mProg.missionAnswer || '')}</div>`;
       }
+
+      // 채점 저장 버튼
+      html += `<div class="detail-score-actions">`;
+      html += `<button class="btn btn-accent detail-save-scores-btn" data-key="${key}" data-name="${escHtml(data.name)}">💾 채점 저장</button>`;
+      html += `<span class="detail-score-status"></span>`;
+      html += `</div>`;
+
       html += `</div>`;
     } else if (mProg.missionDraft || Object.keys(drafts).length > 0) {
       html += `<div class="detail-math-draft">`;
