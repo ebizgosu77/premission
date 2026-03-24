@@ -1,7 +1,8 @@
 /**
  * 매니저 대시보드 — 사이드바 + 4개 페이지
  */
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+  await Storage.init();
   const session = App.requireAuth('manager');
   if (!session) return;
 
@@ -10,6 +11,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 기수명 표시
   document.getElementById('sidebarCohort').textContent = Storage.getCohortName();
+
+  // Firebase 실시간 동기화 시 UI 갱신
+  Storage.onDataChange(() => {
+    document.getElementById('sidebarCohort').textContent = Storage.getCohortName();
+    renderPage();
+  });
 
   // 로그아웃
   document.getElementById('logoutBtn').addEventListener('click', App.logout);

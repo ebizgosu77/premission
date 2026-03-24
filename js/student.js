@@ -1,7 +1,8 @@
 /**
  * 수강생 대시보드 — 탭 기반, 챕터별 인라인 퀴즈
  */
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+  await Storage.init();
   const session = App.requireAuth('student');
   if (!session) return;
 
@@ -12,6 +13,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const missions = getMissionData();
   let activeTab = 'python';
+
+  // Firebase 실시간 동기화 시 UI 갱신
+  Storage.onDataChange(() => {
+    studentData = Storage.getStudentData(studentName);
+    if (studentData) renderTabContent();
+  });
 
   // 헤더
   document.getElementById('studentName').textContent = studentName;

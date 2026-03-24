@@ -394,10 +394,9 @@ function getQuizChapterCount() {
 
 // 미션 데이터 가져오기 (매니저가 편집한 데이터 우선)
 function getMissionData() {
-  const customMath = localStorage.getItem('aicamp_custom_missions');
-  if (customMath) {
+  const custom = Storage.getCustomMissions();
+  if (custom) {
     try {
-      const custom = JSON.parse(customMath);
       const merged = JSON.parse(JSON.stringify(MISSIONS));
       if (custom.mathBasic) merged.mathBasic = custom.mathBasic;
       if (custom.mathAdv) merged.mathAdv = custom.mathAdv;
@@ -409,11 +408,7 @@ function getMissionData() {
 
 // 매니저가 수학 미션 저장
 function saveCustomMission(key, missionData) {
-  let custom = {};
-  const existing = localStorage.getItem('aicamp_custom_missions');
-  if (existing) {
-    try { custom = JSON.parse(existing); } catch { /* ignore */ }
-  }
+  let custom = Storage.getCustomMissions() || {};
   custom[key] = missionData;
-  localStorage.setItem('aicamp_custom_missions', JSON.stringify(custom));
+  Storage.saveCustomMissions(custom);
 }
