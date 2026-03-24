@@ -420,6 +420,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     body.innerHTML = html;
     App.openModal(modal);
 
+    // 모범답안 textContent 설정 (HTML 이스케이프 충돌 방지)
+    body.querySelectorAll('.detail-model-content').forEach(el => {
+      const raw = el.dataset.raw;
+      if (raw) el.textContent = App.fixChatGPTLatex(raw);
+    });
+
     // KaTeX 수식 렌더링
     if (window.renderMathInElement) {
       body.querySelectorAll('.detail-math-q, .detail-model-answer, .detail-math-answer').forEach(el => {
@@ -515,7 +521,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // 모범답안
         if (p.answer) {
-          html += `<div class="detail-model-answer"><span class="detail-model-label">모범답안:</span> ${App.renderMathHtml(p.answer)}</div>`;
+          html += `<div class="detail-model-answer"><span class="detail-model-label">모범답안:</span> <span class="detail-model-content" data-raw="${escHtml(p.answer)}" style="white-space:pre-wrap"></span></div>`;
         }
 
         // 학생 답안
@@ -663,11 +669,23 @@ document.addEventListener('DOMContentLoaded', async () => {
       const answerArea = item.querySelector('.mgr-answer-input');
       if (previewEl.style.display === 'none') {
         previewEl.style.display = 'block';
-        let previewHtml = `<div class="mgr-preview-section"><strong>문제:</strong><br>${renderMathText(textarea.value)}</div>`;
+        previewEl.innerHTML = '';
+        // 문제 미리보기
+        const qDiv = document.createElement('div');
+        qDiv.className = 'mgr-preview-section';
+        qDiv.innerHTML = `<strong>문제:</strong><br>${renderMathText(textarea.value)}`;
+        previewEl.appendChild(qDiv);
+        // 모범답안 미리보기 (textContent로 HTML 충돌 방지)
         if (answerArea.value.trim()) {
-          previewHtml += `<div class="mgr-preview-section mgr-preview-answer"><strong>모범답안:</strong><br>${renderMathText(answerArea.value)}</div>`;
+          const aDiv = document.createElement('div');
+          aDiv.className = 'mgr-preview-section mgr-preview-answer';
+          aDiv.innerHTML = '<strong>모범답안:</strong><br>';
+          const aContent = document.createElement('span');
+          aContent.textContent = App.fixChatGPTLatex(answerArea.value);
+          aContent.style.whiteSpace = 'pre-wrap';
+          aDiv.appendChild(aContent);
+          previewEl.appendChild(aDiv);
         }
-        previewEl.innerHTML = previewHtml;
         if (window.renderMathInElement) {
           renderMathInElement(previewEl, {
             delimiters: [
@@ -684,13 +702,20 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     });
 
-    // 모범답안 미리보기
+    // 모범답안 미리보기 (textContent + KaTeX 직접 렌더링)
     item.querySelector('.mgr-answer-preview-btn').addEventListener('click', () => {
       const previewEl = item.querySelector('.mgr-answer-preview');
       const answerArea = item.querySelector('.mgr-answer-input');
       if (previewEl.style.display === 'none') {
         previewEl.style.display = 'block';
-        previewEl.innerHTML = renderMathText(answerArea.value) || '<em>모범답안이 비어있습니다.</em>';
+        const val = answerArea.value.trim();
+        if (!val) {
+          previewEl.innerHTML = '<em>모범답안이 비어있습니다.</em>';
+          return;
+        }
+        // ChatGPT 보정 후 textContent로 설정 (HTML 이스케이프 충돌 방지)
+        previewEl.textContent = App.fixChatGPTLatex(val);
+        previewEl.style.whiteSpace = 'pre-wrap';
         if (window.renderMathInElement) {
           renderMathInElement(previewEl, {
             delimiters: [

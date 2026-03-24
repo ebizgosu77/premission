@@ -189,23 +189,33 @@ const App = (() => {
     return result;
   }
 
-  // HTML 이스케이프 + 수학 변환 + 줄바꿈 처리
-  // LaTeX 구간($...$, $$...$$, \(...\), \[...\])은 변환하지 않고 보존
-  function renderMathHtml(text) {
+  // ChatGPT 복사 보정 (외부 사용 가능)
+  function fixChatGPTLatex(text) {
     if (!text) return '';
-
-    // ChatGPT 복사 보정: 행렬 등에서 \ + 줄바꿈 → \\ (LaTeX 줄바꿈)
+    // 행렬 등에서 \ + 줄바꿈 → \\ (LaTeX 줄바꿈)
     let fixed = text.replace(/(\\begin\{[^}]+\}[\s\S]*?\\end\{[^}]+\})/g, (block) => {
       return block.replace(/\\\n/g, '\\\\\n');
     });
-
-    // ChatGPT 복사 보정: 멀티라인 $...$ → $$...$$ (display math)
+    // 멀티라인 $...$ → $$...$$ (display math)
     fixed = fixed.replace(/\$(?!\$)([\s\S]*?)\$(?!\$)/g, (match, inner) => {
       if (inner.includes('\n') && (inner.includes('\\begin') || inner.includes('\\frac') || inner.includes('\\sum'))) {
         return '$$' + inner + '$$';
       }
       return match;
     });
+    // 인라인 행렬에서 \ + 공백 + 숫자 → \\ (행 구분)
+    fixed = fixed.replace(/(\$[^$]*\\begin\{[^}]+\}[^$]*\$)/g, (block) => {
+      return block.replace(/\\\s+(?=\d)/g, '\\\\ ');
+    });
+    return fixed;
+  }
+
+  // HTML 이스케이프 + 수학 변환 + 줄바꿈 처리
+  // LaTeX 구간($...$, $$...$$, \(...\), \[...\])은 변환하지 않고 보존
+  function renderMathHtml(text) {
+    if (!text) return '';
+
+    let fixed = fixChatGPTLatex(text);
 
     let escaped = fixed.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
@@ -248,6 +258,6 @@ const App = (() => {
 
   return {
     showToast, calcProgress, formatDate, logout, requireAuth, openModal, closeModal,
-    convertMathNotation, renderMathHtml
+    convertMathNotation, renderMathHtml, fixChatGPTLatex
   };
 })();
