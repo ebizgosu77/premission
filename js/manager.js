@@ -131,6 +131,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <th>수학(심화)</th>
                 <th>종합</th>
                 <th>마지막 접속</th>
+                <th>관리</th>
               </tr>
             </thead>
             <tbody id="overviewTableBody"></tbody>
@@ -197,7 +198,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!tbody) return;
 
     if (names.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="8" class="empty-msg">등록된 수강생이 없습니다.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="9" class="empty-msg">등록된 수강생이 없습니다.</td></tr>';
       return;
     }
 
@@ -229,6 +230,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         <td>${percentCell(row.mathAdv)}</td>
         <td>${percentCell(row.overall)}</td>
         <td class="date-cell">${App.formatDate(row.data.lastLogin)}</td>
+        <td><button class="btn btn-sm btn-danger mgr-delete-student" data-name="${row.name}" title="수강생 삭제">✕</button></td>
       `;
       tbody.appendChild(tr);
     });
@@ -236,6 +238,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 이름 클릭 → 상세 모달
     tbody.querySelectorAll('.name-link').forEach(btn => {
       btn.addEventListener('click', () => openDetailModal(btn.dataset.name));
+    });
+
+    // 수강생 삭제
+    tbody.querySelectorAll('.mgr-delete-student').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const name = btn.dataset.name;
+        if (!window.confirm(`"${name}" 수강생을 삭제하시겠습니까?\n모든 학습 데이터가 삭제됩니다.`)) return;
+        Storage.deleteStudent(name);
+        App.showToast(`${name} 수강생이 삭제되었습니다.`, 'success');
+        renderPage();
+      });
     });
   }
 
