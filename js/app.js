@@ -237,10 +237,13 @@ const App = (() => {
     // LaTeX가 아닌 부분만 수학 기호 변환
     escaped = convertMathNotation(escaped);
 
-    // 플레이스홀더 복원
+    // 줄바꿈 → <br> (플레이스홀더 복원 전에 적용하여 LaTeX 내부 줄바꿈 보존)
+    escaped = escaped.replace(/\n/g, '<br>');
+
+    // 플레이스홀더 복원 (LaTeX 블록은 원본 줄바꿈 유지)
     escaped = escaped.replace(/\x00LATEX(\d+)\x00/g, (_, idx) => latexBlocks[parseInt(idx)]);
 
-    return escaped.replace(/\n/g, '<br>');
+    return escaped;
   }
 
   return {
