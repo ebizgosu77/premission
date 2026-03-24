@@ -210,6 +210,97 @@ const App = (() => {
     return fixed;
   }
 
+  // 수식을 KaTeX로 직접 렌더링하여 HTML 반환 (모범답안용)
+  function renderMathDirect(text) {
+    if (!text || typeof katex === 'undefined') return escapeHtml(text || '');
+    let fixed = fixChatGPTLatex(text);
+
+    // $$...$$ display math → KaTeX 렌더링
+    fixed = fixed.replace(/\$\$([\s\S]*?)\$\$/g, (_, expr) => {
+      try {
+        return katex.renderToString(expr.trim(), { displayMode: true, throwOnError: false });
+      } catch { return '$$' + expr + '$$'; }
+    });
+
+    // $...$ inline math → KaTeX 렌더링
+    fixed = fixed.replace(/\$([^\n$]+?)\$/g, (_, expr) => {
+      try {
+        return katex.renderToString(expr.trim(), { displayMode: false, throwOnError: false });
+      } catch { return '$' + expr + '$'; }
+    });
+
+    // 나머지 텍스트 HTML 이스케이프 + 줄바꿈
+    fixed = fixed.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    // 위의 replace가 KaTeX 출력의 HTML도 이스케이프하므로 순서 변경 필요
+
+    return fixed;
+  }
+
+  // 수식 포함 텍스트를 안전하게 DOM에 렌더링 (모범답안용)
+  function renderMathToElement(el, text) {
+    if (!text) { el.innerHTML = '<em>비어있음</em>'; return; }
+    if (typeof katex === 'undefined') { el.textContent = text; return; }
+
+    let fixed = fixChatGPTLatex(text);
+
+    // 수식과 텍스트를 분리하여 DOM 구성
+    const parts = [];
+    let lastIdx = 0;
+
+    // $$...$$ (display math)
+    const displayRegex = /\$\$([\s\S]*?)\$\$/g;
+    let m;
+    while ((m = displayRegex.exec(fixed)) !== null) {
+      if (m.index > lastIdx) parts.push({ type: 'text', content: fixed.slice(lastIdx, m.index) });
+      parts.push({ type: 'display', content: m[1].trim() });
+      lastIdx = m.index + m[0].length;
+    }
+    if (lastIdx < fixed.length) parts.push({ type: 'text', content: fixed.slice(lastIdx) });
+
+    // 텍스트 파트에서 $...$ (inline math) 분리
+    const finalParts = [];
+    parts.forEach(p => {
+      if (p.type !== 'text') { finalParts.push(p); return; }
+      const inlineRegex = /\$([^\n$]+?)\$/g;
+      let last = 0, im;
+      while ((im = inlineRegex.exec(p.content)) !== null) {
+        if (im.index > last) finalParts.push({ type: 'text', content: p.content.slice(last, im.index) });
+        finalParts.push({ type: 'inline', content: im[1].trim() });
+        last = im.index + im[0].length;
+      }
+      if (last < p.content.length) finalParts.push({ type: 'text', content: p.content.slice(last) });
+    });
+
+    // DOM 생성
+    el.innerHTML = '';
+    finalParts.forEach(p => {
+      if (p.type === 'display') {
+        const div = document.createElement('div');
+        div.style.margin = '12px 0';
+        div.style.overflowX = 'auto';
+        try { katex.render(p.content, div, { displayMode: true, throwOnError: false }); }
+        catch { div.textContent = '$$' + p.content + '$$'; }
+        el.appendChild(div);
+      } else if (p.type === 'inline') {
+        const span = document.createElement('span');
+        try { katex.render(p.content, span, { displayMode: false, throwOnError: false }); }
+        catch { span.textContent = '$' + p.content + '$'; }
+        el.appendChild(span);
+      } else {
+        // 텍스트: 줄바꿈 보존
+        const lines = p.content.split('\n');
+        lines.forEach((line, i) => {
+          if (i > 0) el.appendChild(document.createElement('br'));
+          if (line) el.appendChild(document.createTextNode(line));
+        });
+      }
+    });
+  }
+
+  function escapeHtml(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
   // HTML 이스케이프 + 수학 변환 + 줄바꿈 처리
   // LaTeX 구간($...$, $$...$$, \(...\), \[...\])은 변환하지 않고 보존
   function renderMathHtml(text) {
@@ -258,6 +349,6 @@ const App = (() => {
 
   return {
     showToast, calcProgress, formatDate, logout, requireAuth, openModal, closeModal,
-    convertMathNotation, renderMathHtml, fixChatGPTLatex
+    convertMathNotation, renderMathHtml, fixChatGPTLatex, renderMathToElement
   };
 })();
