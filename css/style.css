@@ -2314,6 +2314,17 @@ a { color: var(--accent-blue); text-decoration: none; }
   opacity: 0.6;
 }
 
+.mgr-preview-section {
+  margin-bottom: 12px;
+}
+
+.mgr-preview-answer {
+  padding: 10px 14px;
+  background: rgba(46, 204, 113, 0.08);
+  border-left: 3px solid var(--accent-green);
+  border-radius: var(--radius-sm);
+}
+
 /* ── Detail: 모범답안 표시 ── */
 .detail-model-answer {
   margin-top: 6px;

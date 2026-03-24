@@ -420,6 +420,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     body.innerHTML = html;
     App.openModal(modal);
 
+    // KaTeX 수식 렌더링
+    if (window.renderMathInElement) {
+      body.querySelectorAll('.detail-math-q, .detail-model-answer, .detail-math-answer').forEach(el => {
+        renderMathInElement(el, {
+          delimiters: [
+            { left: '$$', right: '$$', display: true },
+            { left: '$', right: '$', display: false },
+            { left: '\\(', right: '\\)', display: false },
+            { left: '\\[', right: '\\]', display: true }
+          ],
+          throwOnError: false
+        });
+      });
+    }
+
     // 채점 저장 버튼 이벤트
     body.querySelectorAll('.detail-save-scores-btn').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -640,9 +655,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     item.querySelector('.mgr-preview-btn').addEventListener('click', () => {
       const previewEl = item.querySelector('.mgr-problem-preview');
       const textarea = item.querySelector('.mgr-problem-input');
+      const answerArea = item.querySelector('.mgr-answer-input');
       if (previewEl.style.display === 'none') {
         previewEl.style.display = 'block';
-        previewEl.innerHTML = renderMathText(textarea.value);
+        let previewHtml = `<div class="mgr-preview-section"><strong>문제:</strong><br>${renderMathText(textarea.value)}</div>`;
+        if (answerArea.value.trim()) {
+          previewHtml += `<div class="mgr-preview-section mgr-preview-answer"><strong>모범답안:</strong><br>${renderMathText(answerArea.value)}</div>`;
+        }
+        previewEl.innerHTML = previewHtml;
         if (window.renderMathInElement) {
           renderMathInElement(previewEl, {
             delimiters: [
