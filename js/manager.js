@@ -458,73 +458,62 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     html += `</h3>`;
 
+    // 상태 배지
     if (mProg.missionSubmitted) {
-      html += `<div class="detail-math-submitted">`;
       html += `<div class="detail-math-badge">✅ 제출 완료 <span class="detail-date">${App.formatDate(mProg.missionSubmittedAt)}</span></div>`;
+    } else if (mProg.missionDraft || Object.keys(drafts).length > 0) {
+      html += `<div class="detail-math-badge draft">📝 임시저장 (미제출)</div>`;
+    } else {
+      html += `<div class="detail-math-badge draft">⬜ 미작성</div>`;
+    }
 
-      if (problems.length > 0 && Object.keys(answers).length > 0) {
-        problems.forEach((p, idx) => {
-          const pid = String(p.id);
-          const ans = answers[pid] || answers[String(idx + 1)] || '';
-          const files = submittedAttachments[pid] || submittedAttachments[String(idx + 1)] || [];
-          const score = scores[pid];
+    // 문제별 표시 + 채점 (상태 무관)
+    if (problems.length > 0) {
+      const attachments = mProg.missionAttachments || {};
 
-          html += `<div class="detail-math-per-problem">`;
-          html += `<div class="detail-math-q">문제 ${idx + 1}: ${App.renderMathHtml(p.text)}</div>`;
+      problems.forEach((p, idx) => {
+        const pid = String(p.id);
+        const ans = answers[pid] || answers[String(idx + 1)] || '';
+        const dft = drafts[pid] || drafts[String(idx + 1)] || '';
+        const filesSubmitted = submittedAttachments[pid] || submittedAttachments[String(idx + 1)] || [];
+        const filesDraft = attachments[pid] || attachments[String(idx + 1)] || [];
+        const files = filesSubmitted.length > 0 ? filesSubmitted : filesDraft;
+        const answerText = ans || dft || '';
+        const score = scores[pid];
 
-          if (ans) {
-            html += `<div class="detail-math-answer">${escHtml(ans)}</div>`;
-          }
+        html += `<div class="detail-math-per-problem">`;
+        html += `<div class="detail-math-q">문제 ${idx + 1}: ${App.renderMathHtml(p.text)}</div>`;
 
-          // 첨부 이미지 표시
-          if (files.length > 0) {
-            html += `<div class="detail-attach-list">`;
-            files.forEach(f => {
-              html += `<div class="detail-attach-item"><img src="${f.data}" alt="${escHtml(f.name)}" class="detail-attach-img" onclick="this.classList.toggle('expanded')"></div>`;
-            });
-            html += `</div>`;
-          }
+        if (answerText) {
+          html += `<div class="detail-math-answer">${escHtml(answerText)}</div>`;
+        } else {
+          html += `<div class="detail-math-answer"><em>미작성</em></div>`;
+        }
 
-          // 채점 입력
-          html += `<div class="detail-score-row">`;
-          html += `<label>점수:</label>`;
-          html += `<input type="number" class="detail-score-input" data-problem-id="${pid}" value="${typeof score === 'number' ? score : ''}" min="0" max="100" placeholder="미채점">`;
-          html += `<span class="detail-score-unit">점</span>`;
+        // 첨부 이미지 표시
+        if (files.length > 0) {
+          html += `<div class="detail-attach-list">`;
+          files.forEach(f => {
+            html += `<div class="detail-attach-item"><img src="${f.data}" alt="${escHtml(f.name)}" class="detail-attach-img" onclick="this.classList.toggle('expanded')"></div>`;
+          });
           html += `</div>`;
+        }
 
-          html += `</div>`;
-        });
-      } else {
-        html += `<div class="detail-math-answer">${escHtml(mProg.missionAnswer || '')}</div>`;
-      }
+        // 채점 입력
+        html += `<div class="detail-score-row">`;
+        html += `<label>점수:</label>`;
+        html += `<input type="number" class="detail-score-input" data-problem-id="${pid}" value="${typeof score === 'number' ? score : ''}" min="0" max="100" placeholder="미채점">`;
+        html += `<span class="detail-score-unit">점</span>`;
+        html += `</div>`;
+
+        html += `</div>`;
+      });
 
       // 채점 저장 버튼
       html += `<div class="detail-score-actions">`;
       html += `<button class="btn btn-accent detail-save-scores-btn" data-key="${key}" data-name="${escHtml(data.name)}">💾 채점 저장</button>`;
       html += `<span class="detail-score-status"></span>`;
       html += `</div>`;
-
-      html += `</div>`;
-    } else if (mProg.missionDraft || Object.keys(drafts).length > 0) {
-      html += `<div class="detail-math-draft">`;
-      html += `<div class="detail-math-badge draft">📝 임시저장 (미제출)</div>`;
-
-      if (problems.length > 0 && Object.keys(drafts).length > 0) {
-        problems.forEach((p, idx) => {
-          const dft = drafts[String(p.id)] || drafts[String(idx + 1)] || '';
-          html += `
-            <div class="detail-math-per-problem">
-              <div class="detail-math-q">문제 ${idx + 1}: ${App.renderMathHtml(p.text)}</div>
-              <div class="detail-math-answer">${escHtml(dft) || '<em>미작성</em>'}</div>
-            </div>
-          `;
-        });
-      } else {
-        html += `<div class="detail-math-answer">${escHtml(mProg.missionDraft)}</div>`;
-      }
-      html += `</div>`;
-    } else {
-      html += `<p class="detail-empty">아직 작성하지 않았습니다.</p>`;
     }
 
     html += `</div>`;
