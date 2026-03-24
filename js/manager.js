@@ -128,7 +128,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <th>Python</th>
                 <th>Git</th>
                 <th>수학(기본)</th>
+                <th>기본 점수</th>
                 <th>수학(심화)</th>
+                <th>심화 점수</th>
                 <th>종합</th>
                 <th>마지막 접속</th>
                 <th>관리</th>
@@ -198,7 +200,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!tbody) return;
 
     if (names.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="9" class="empty-msg">등록된 수강생이 없습니다.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="11" class="empty-msg">등록된 수강생이 없습니다.</td></tr>';
       return;
     }
 
@@ -212,6 +214,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         git: calcMissionPercent(data, 'git'),
         mathBasic: calcMathPercent(data, 'mathBasic'),
         mathAdv: calcMathPercent(data, 'mathAdv'),
+        mathBasicScore: data.progress?.mathBasic?.totalScore,
+        mathAdvScore: data.progress?.mathAdv?.totalScore,
         overall: App.calcProgress(data).overall
       };
     });
@@ -227,7 +231,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         <td>${percentCell(row.python)}</td>
         <td>${percentCell(row.git)}</td>
         <td>${percentCell(row.mathBasic)}</td>
+        <td>${scoreCell(row.mathBasicScore)}</td>
         <td>${percentCell(row.mathAdv)}</td>
+        <td>${scoreCell(row.mathAdvScore)}</td>
         <td>${percentCell(row.overall)}</td>
         <td class="date-cell">${App.formatDate(row.data.lastLogin)}</td>
         <td><button class="btn btn-sm btn-danger mgr-delete-student" data-name="${row.name}" title="수강생 삭제">✕</button></td>
@@ -293,6 +299,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     else if (pct >= 50) cls = 'pct-yellow';
     else if (pct >= 1) cls = 'pct-orange';
     return `<span class="pct-cell ${cls} num">${pct}%</span>`;
+  }
+
+  function scoreCell(score) {
+    if (typeof score !== 'number') return `<span class="score-cell score-none">-</span>`;
+    let cls = 'score-low';
+    if (score >= 80) cls = 'score-high';
+    else if (score >= 50) cls = 'score-mid';
+    return `<span class="score-cell ${cls} num">${score}점</span>`;
   }
 
   // ══════════════════════════════════════════

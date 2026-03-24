@@ -2111,6 +2111,18 @@ a { color: var(--accent-blue); text-decoration: none; }
   color: var(--success);
 }
 
+.score-cell {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.score-none { color: var(--text-muted); }
+.score-high { background: rgba(46, 204, 113, 0.15); color: var(--success); }
+.score-mid { background: rgba(241, 196, 15, 0.15); color: var(--warning); }
+.score-low { background: rgba(231, 76, 60, 0.15); color: var(--error); }
+
 /* ── Manager Detail Modal ── */
 .modal-lg {
   max-width: 780px;
