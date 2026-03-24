@@ -251,7 +251,7 @@ a { color: var(--accent-blue); text-decoration: none; }
 .login-footer {
   margin-top: 48px;
   color: var(--text-muted);
-  font-size: 12px;
+  font-size: 15px;
 }
 
 /* ===== Top Bar ===== */
