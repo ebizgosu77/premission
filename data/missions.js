@@ -274,42 +274,84 @@ const MISSIONS = {
     id: 'git',
     title: 'Git & GitHub',
     icon: '🔀',
-    description: '얄팍한 코딩사전의 Git & GitHub 핵심 강의를 학습합니다.',
-    playlistUrl: 'https://www.youtube.com/watch?v=1I3hMwQU6GU',
+    description: '플레이데이터 Git & GitHub 프리코스 강의 11개 챕터를 학습합니다.',
+    playlistUrl: 'https://playdata.io/precourse_git',
     chapters: [
       {
         id: 'git-ch1',
-        title: 'Git이란? 버전관리 개념',
-        youtubeUrl: 'https://www.youtube.com/watch?v=1I3hMwQU6GU&t=0',
-        duration: '약 15분',
+        title: 'Git에 대한 설치',
+        youtubeUrl: 'https://playdata.io/precourse_git',
+        duration: '-',
         quiz: []
       },
       {
         id: 'git-ch2',
-        title: '설치 & 기본 명령어 (init, add, commit)',
-        youtubeUrl: 'https://www.youtube.com/watch?v=1I3hMwQU6GU&t=900',
-        duration: '약 20분',
+        title: 'Git 기본 설정 (프로젝트 경로 생성 및 Git 초기화)',
+        youtubeUrl: 'https://playdata.io/precourse_git',
+        duration: '-',
         quiz: []
       },
       {
         id: 'git-ch3',
-        title: 'Branch & Merge',
-        youtubeUrl: 'https://www.youtube.com/watch?v=1I3hMwQU6GU&t=2100',
-        duration: '약 18분',
+        title: 'Git 기본 설정 (매뉴얼 보는 방법)',
+        youtubeUrl: 'https://playdata.io/precourse_git',
+        duration: '-',
         quiz: []
       },
       {
         id: 'git-ch4',
-        title: 'GitHub 원격 저장소 (push, pull)',
-        youtubeUrl: 'https://www.youtube.com/watch?v=1I3hMwQU6GU&t=3200',
-        duration: '약 15분',
+        title: 'Git 핵심 세 가지 상태',
+        youtubeUrl: 'https://playdata.io/precourse_git',
+        duration: '-',
         quiz: []
       },
       {
         id: 'git-ch5',
-        title: '협업 워크플로우 (fork, PR)',
-        youtubeUrl: 'https://www.youtube.com/watch?v=1I3hMwQU6GU&t=4100',
-        duration: '약 15분',
+        title: 'Git의 주요 작업 흐름 및 Commit',
+        youtubeUrl: 'https://playdata.io/precourse_git',
+        duration: '-',
+        quiz: []
+      },
+      {
+        id: 'git-ch6',
+        title: 'Git의 주요 작업 흐름 및 Commit (실습)',
+        youtubeUrl: 'https://playdata.io/precourse_git',
+        duration: '-',
+        quiz: []
+      },
+      {
+        id: 'git-ch7',
+        title: '로컬 작업을 Github에 연동하기',
+        youtubeUrl: 'https://playdata.io/precourse_git',
+        duration: '-',
+        quiz: []
+      },
+      {
+        id: 'git-ch8',
+        title: '내용 확인과 변경사항 비교하기',
+        youtubeUrl: 'https://playdata.io/precourse_git',
+        duration: '-',
+        quiz: []
+      },
+      {
+        id: 'git-ch9',
+        title: '리모트의 레포 복제 및 설정하기',
+        youtubeUrl: 'https://playdata.io/precourse_git',
+        duration: '-',
+        quiz: []
+      },
+      {
+        id: 'git-ch10',
+        title: '팝업과 충돌 해결하기',
+        youtubeUrl: 'https://playdata.io/precourse_git',
+        duration: '-',
+        quiz: []
+      },
+      {
+        id: 'git-ch11',
+        title: '브랜치 활용',
+        youtubeUrl: 'https://playdata.io/precourse_git',
+        duration: '-',
         quiz: []
       }
     ]
