@@ -1,6 +1,6 @@
 /**
  * 사전미션 메타데이터
- * - Python: 8챕터, 챕터별 퀴즈 3문항
+ * - Python: 8챕터 (혼자 공부하는 파이썬 개정판), 챕터별 퀴즈 3문항
  * - Git: 5챕터, 퀴즈 없음
  * - mathBasic / mathAdv: 매니저가 직접 등록 (placeholder)
  */
@@ -9,14 +9,14 @@ const MISSIONS = {
     id: 'python',
     title: 'Python 기초',
     icon: '🐍',
-    description: '나도코딩 스타일 Python 입문 강의 8개 챕터를 학습합니다.',
-    playlistUrl: 'https://www.youtube.com/playlist?list=PLMsa_0kAjjrdiwQykI8eb3H4IRxLTqCnP',
+    description: '혼자 공부하는 파이썬(개정판) 강의 8개 챕터를 학습합니다.',
+    playlistUrl: 'https://www.youtube.com/playlist?list=PLVsNizTWUw7FvE4FSPmYTtqtwUe0je4r_',
     chapters: [
       {
         id: 'py-ch1',
-        title: '파이썬 소개 & 설치',
-        youtubeUrl: 'https://www.youtube.com/watch?v=kWiCuklohdY',
-        duration: '약 20분',
+        title: '파이썬 소개 & 개발 환경',
+        youtubeUrl: 'https://www.youtube.com/watch?v=6kzsVLNZQ0E&list=PLVsNizTWUw7FvE4FSPmYTtqtwUe0je4r_',
+        duration: '약 25분 (0~2강)',
         quiz: [
           {
             id: 'py-ch1-q1',
@@ -44,9 +44,9 @@ const MISSIONS = {
       },
       {
         id: 'py-ch2',
-        title: '변수와 자료형',
-        youtubeUrl: 'https://www.youtube.com/watch?v=kWiCuklohdY&t=1200',
-        duration: '약 30분',
+        title: '자료형 · 변수 · 연산자',
+        youtubeUrl: 'https://www.youtube.com/watch?v=yfyo65co61s&list=PLVsNizTWUw7FvE4FSPmYTtqtwUe0je4r_',
+        duration: '약 2시간 40분 (3~17강)',
         quiz: [
           {
             id: 'py-ch2-q1',
@@ -76,41 +76,12 @@ const MISSIONS = {
       },
       {
         id: 'py-ch3',
-        title: '연산자',
-        youtubeUrl: 'https://www.youtube.com/watch?v=kWiCuklohdY&t=3000',
-        duration: '약 25분',
+        title: '조건문 (if / elif / else)',
+        youtubeUrl: 'https://www.youtube.com/watch?v=cgFJG4mKw_Q&list=PLVsNizTWUw7FvE4FSPmYTtqtwUe0je4r_',
+        duration: '약 1시간 7분 (19~25강)',
         quiz: [
           {
             id: 'py-ch3-q1',
-            question: '10 // 3 의 결과는?',
-            type: 'short',
-            answer: '3',
-            explanation: '// 는 몫(정수 나눗셈) 연산자입니다. 10 ÷ 3 = 3 나머지 1'
-          },
-          {
-            id: 'py-ch3-q2',
-            question: '10 % 3 의 결과는?',
-            type: 'short',
-            answer: '1',
-            explanation: '% 는 나머지 연산자입니다. 10을 3으로 나눈 나머지는 1입니다.'
-          },
-          {
-            id: 'py-ch3-q3',
-            question: '2 ** 4 의 결과는?',
-            type: 'short',
-            answer: '16',
-            explanation: '** 는 거듭제곱 연산자입니다. 2의 4제곱은 16입니다.'
-          }
-        ]
-      },
-      {
-        id: 'py-ch4',
-        title: '조건문 (if)',
-        youtubeUrl: 'https://www.youtube.com/watch?v=kWiCuklohdY&t=4800',
-        duration: '약 30분',
-        quiz: [
-          {
-            id: 'py-ch4-q1',
             question: 'if문에서 조건이 거짓일 때 실행되는 블록은?',
             type: 'multiple',
             options: ['if', 'elif', 'else', 'then'],
@@ -118,14 +89,14 @@ const MISSIONS = {
             explanation: 'else 블록은 if, elif 조건이 모두 거짓일 때 실행됩니다.'
           },
           {
-            id: 'py-ch4-q2',
+            id: 'py-ch3-q2',
             question: 'Python에서 "그리고" 를 의미하는 논리 연산자는?',
             type: 'short',
             answer: 'and',
             explanation: 'Python은 &&가 아닌 and 키워드를 사용합니다.'
           },
           {
-            id: 'py-ch4-q3',
+            id: 'py-ch3-q3',
             question: '다음 코드의 출력은?\n\nx = 15\nif x > 20:\n    print("A")\nelif x > 10:\n    print("B")\nelse:\n    print("C")',
             type: 'multiple',
             options: ['A', 'B', 'C', '에러 발생'],
@@ -135,13 +106,13 @@ const MISSIONS = {
         ]
       },
       {
-        id: 'py-ch5',
-        title: '반복문 (for, while)',
-        youtubeUrl: 'https://www.youtube.com/watch?v=kWiCuklohdY&t=6600',
-        duration: '약 35분',
+        id: 'py-ch4',
+        title: '반복문 · 리스트 · 딕셔너리',
+        youtubeUrl: 'https://www.youtube.com/watch?v=L1S1O6dCtKI&list=PLVsNizTWUw7FvE4FSPmYTtqtwUe0je4r_',
+        duration: '약 3시간 20분 (26~48강)',
         quiz: [
           {
-            id: 'py-ch5-q1',
+            id: 'py-ch4-q1',
             question: 'for i in range(5)는 몇 번 반복되는가?',
             type: 'multiple',
             options: ['4번', '5번', '6번', '무한 반복'],
@@ -149,43 +120,44 @@ const MISSIONS = {
             explanation: 'range(5)는 0, 1, 2, 3, 4로 총 5번 반복됩니다.'
           },
           {
-            id: 'py-ch5-q2',
+            id: 'py-ch4-q2',
             question: '반복문을 즉시 종료하는 키워드는?',
             type: 'short',
             answer: 'break',
             explanation: 'break는 현재 반복문을 즉시 종료합니다.'
           },
           {
-            id: 'py-ch5-q3',
-            question: '현재 반복을 건너뛰고 다음 반복으로 넘어가는 키워드는?',
-            type: 'short',
-            answer: 'continue',
-            explanation: 'continue는 현재 반복의 나머지 코드를 건너뛰고 다음 반복으로 넘어갑니다.'
+            id: 'py-ch4-q3',
+            question: '딕셔너리에서 키(key)로 사용할 수 없는 자료형은?',
+            type: 'multiple',
+            options: ['문자열(str)', '정수(int)', '리스트(list)', '튜플(tuple)'],
+            answer: 2,
+            explanation: '리스트는 변경 가능(mutable)하므로 딕셔너리의 키로 사용할 수 없습니다.'
           }
         ]
       },
       {
-        id: 'py-ch6',
+        id: 'py-ch5',
         title: '함수',
-        youtubeUrl: 'https://www.youtube.com/watch?v=kWiCuklohdY&t=8400',
-        duration: '약 30분',
+        youtubeUrl: 'https://www.youtube.com/watch?v=aKOn6WVD8Cc&list=PLVsNizTWUw7FvE4FSPmYTtqtwUe0je4r_',
+        duration: '약 3시간 30분 (49~70강)',
         quiz: [
           {
-            id: 'py-ch6-q1',
+            id: 'py-ch5-q1',
             question: 'Python에서 함수를 정의할 때 사용하는 키워드는?',
             type: 'short',
             answer: 'def',
             explanation: 'def 키워드로 함수를 정의합니다. 예: def my_func():'
           },
           {
-            id: 'py-ch6-q2',
+            id: 'py-ch5-q2',
             question: '함수에서 값을 반환할 때 사용하는 키워드는?',
             type: 'short',
             answer: 'return',
             explanation: 'return 키워드를 사용하여 호출한 곳으로 값을 반환합니다.'
           },
           {
-            id: 'py-ch6-q3',
+            id: 'py-ch5-q3',
             question: '다음 중 기본값 매개변수 사용이 올바른 것은?',
             type: 'multiple',
             options: [
@@ -200,73 +172,98 @@ const MISSIONS = {
         ]
       },
       {
+        id: 'py-ch6',
+        title: '예외 처리',
+        youtubeUrl: 'https://www.youtube.com/watch?v=opPu2ZXC0lM&list=PLVsNizTWUw7FvE4FSPmYTtqtwUe0je4r_',
+        duration: '약 51분 (72~77강)',
+        quiz: [
+          {
+            id: 'py-ch6-q1',
+            question: '예외 처리를 위해 사용하는 기본 구문은?',
+            type: 'multiple',
+            options: ['if / else', 'try / except', 'for / in', 'def / return'],
+            answer: 1,
+            explanation: 'try 블록에서 예외가 발생하면 except 블록이 실행됩니다.'
+          },
+          {
+            id: 'py-ch6-q2',
+            question: 'try 구문에서 예외 발생 여부와 관계없이 항상 실행되는 블록은?',
+            type: 'short',
+            answer: 'finally',
+            explanation: 'finally 블록은 예외 발생 여부와 상관없이 항상 실행됩니다.'
+          },
+          {
+            id: 'py-ch6-q3',
+            question: '강제로 예외를 발생시킬 때 사용하는 키워드는?',
+            type: 'short',
+            answer: 'raise',
+            explanation: 'raise 키워드를 사용하여 의도적으로 예외를 발생시킬 수 있습니다.'
+          }
+        ]
+      },
+      {
         id: 'py-ch7',
-        title: '리스트·튜플·딕셔너리',
-        youtubeUrl: 'https://www.youtube.com/watch?v=kWiCuklohdY&t=10200',
-        duration: '약 40분',
+        title: '클래스 · 객체지향',
+        youtubeUrl: 'https://www.youtube.com/watch?v=hR4pwKvr3so&list=PLVsNizTWUw7FvE4FSPmYTtqtwUe0je4r_',
+        duration: '약 1시간 31분 (78~86강)',
         quiz: [
           {
             id: 'py-ch7-q1',
-            question: '리스트(list)와 튜플(tuple)의 가장 큰 차이점은?',
-            type: 'multiple',
-            options: [
-              '리스트는 숫자만, 튜플은 문자만 저장',
-              '리스트는 변경 가능, 튜플은 변경 불가',
-              '리스트는 느리고, 튜플은 빠르다',
-              '차이가 없다'
-            ],
-            answer: 1,
-            explanation: '리스트는 mutable(변경 가능), 튜플은 immutable(변경 불가)입니다.'
+            question: '클래스에서 객체(인스턴스)를 초기화할 때 호출되는 특수 메서드는?',
+            type: 'short',
+            answer: '__init__',
+            explanation: '__init__ 메서드는 객체가 생성될 때 자동으로 호출되는 생성자입니다.'
           },
           {
             id: 'py-ch7-q2',
-            question: '딕셔너리에서 키(key)로 사용할 수 없는 자료형은?',
-            type: 'multiple',
-            options: ['문자열(str)', '정수(int)', '리스트(list)', '튜플(tuple)'],
-            answer: 2,
-            explanation: '리스트는 변경 가능(mutable)하므로 딕셔너리의 키로 사용할 수 없습니다.'
+            question: '클래스 메서드의 첫 번째 매개변수로 반드시 들어가는 것은?',
+            type: 'short',
+            answer: 'self',
+            explanation: 'self는 인스턴스 자신을 가리키며, 메서드의 첫 번째 매개변수로 사용됩니다.'
           },
           {
             id: 'py-ch7-q3',
-            question: 'fruits = ["사과", "바나나", "포도"]일 때 fruits[1]의 값은?',
-            type: 'short',
-            answer: '바나나',
-            explanation: '인덱스는 0부터 시작하므로 fruits[1]은 두 번째 요소인 "바나나"입니다.'
+            question: '기존 클래스의 속성과 메서드를 물려받아 새 클래스를 만드는 것을?',
+            type: 'multiple',
+            options: ['캡슐화', '상속', '다형성', '추상화'],
+            answer: 1,
+            explanation: '상속(inheritance)은 부모 클래스의 속성과 메서드를 자식 클래스가 물려받는 것입니다.'
           }
         ]
       },
       {
         id: 'py-ch8',
-        title: '파일 입출력',
-        youtubeUrl: 'https://www.youtube.com/watch?v=kWiCuklohdY&t=12000',
-        duration: '약 25분',
+        title: '모듈 · 패키지',
+        youtubeUrl: 'https://www.youtube.com/watch?v=Pnf0nW5q9cQ&list=PLVsNizTWUw7FvE4FSPmYTtqtwUe0je4r_',
+        duration: '약 1시간 7분 (87~93강)',
         quiz: [
           {
             id: 'py-ch8-q1',
-            question: '파일을 쓰기 모드로 여는 코드는?',
+            question: '외부 모듈을 설치할 때 사용하는 명령어는?',
             type: 'multiple',
-            options: [
-              'open("file.txt", "r")',
-              'open("file.txt", "w")',
-              'open("file.txt", "a")',
-              'open("file.txt", "x")'
-            ],
+            options: ['python install', 'pip install', 'module install', 'import install'],
             answer: 1,
-            explanation: '"w"는 write 모드로, 파일을 쓰기 전용으로 엽니다.'
+            explanation: 'pip install 명령어로 외부 모듈(라이브러리)을 설치합니다.'
           },
           {
             id: 'py-ch8-q2',
-            question: 'with 문을 사용하면 파일을 자동으로 닫아준다.',
-            type: 'ox',
-            answer: true,
-            explanation: 'with 문은 블록이 끝나면 자동으로 파일을 close() 해줍니다.'
+            question: 'if __name__ == "__main__": 의 의미는?',
+            type: 'multiple',
+            options: [
+              '항상 실행된다',
+              '직접 실행할 때만 실행된다',
+              '모듈로 가져올 때만 실행된다',
+              '에러가 발생한다'
+            ],
+            answer: 1,
+            explanation: '파일을 직접 실행할 때만 __name__이 "__main__"이 되어 해당 블록이 실행됩니다.'
           },
           {
             id: 'py-ch8-q3',
-            question: '기존 파일 내용 뒤에 이어서 쓰려면 어떤 모드를 사용해야 하나요?',
+            question: '모듈을 읽어 들일 때 사용하는 키워드는?',
             type: 'short',
-            answer: 'a',
-            explanation: '"a"(append) 모드는 기존 내용을 유지하고 뒤에 추가합니다.'
+            answer: 'import',
+            explanation: 'import 키워드를 사용하여 모듈을 읽어 들입니다. 예: import math'
           }
         ]
       }
