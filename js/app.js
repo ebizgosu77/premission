@@ -1,5 +1,5 @@
 /**
- * 공통 로직
+ * 공통 로직 — 토스트, 진행률 계산, 인증, 모달
  */
 const App = (() => {
 
@@ -21,20 +21,22 @@ const App = (() => {
   }
 
   // 진행률 계산 (학생 1명)
-  // Python: 수강(8) + 퀴즈합격(8) = 16 항목
-  // Git: 수강(5) = 5 항목
-  // 수학: 제출(2) = 2 항목
-  // 총 23 항목 기준 overall
+  // 수강(N) + 퀴즈 응시(N) 기준 — 채점은 하지 않음
   function calcProgress(studentData) {
+    if (!studentData) {
+      return {
+        watchedChapters: 0, totalChapters: 0, watchPercent: 0,
+        attemptedQuizChapters: 0, totalQuizChapters: 0, quizPercent: 0,
+        overall: 0
+      };
+    }
     const missions = getMissionData();
-    let totalChapters = 0;
-    let watchedChapters = 0;
-    let totalQuizChapters = 0;
-    let passedQuizChapters = 0;
+    let totalChapters = 0, watchedChapters = 0;
+    let totalQuizChapters = 0, attemptedQuizChapters = 0;
 
     MISSION_ORDER.forEach(key => {
       const mission = missions[key];
-      const prog = studentData.progress[key];
+      const prog = studentData.progress?.[key];
       if (!prog) return;
 
       mission.chapters.forEach(ch => {
@@ -42,33 +44,23 @@ const App = (() => {
         const chProg = prog.chapters?.[ch.id];
         if (chProg?.watched) watchedChapters++;
 
-        const hasQuiz = ch.quiz && ch.quiz.length > 0 && ch.quiz[0].type !== 'placeholder';
-        if (hasQuiz) {
+        if (ch.quiz && ch.quiz.length > 0) {
           totalQuizChapters++;
-          if (chProg?.quizCompleted && chProg.quizScore >= 70) passedQuizChapters++;
+          if (chProg?.quizCompleted) attemptedQuizChapters++;
         }
       });
     });
 
-    // 수학 미션 제출 반영
-    let mathSubmitted = 0;
-    const mathTotal = 2;
-    ['mathBasic', 'mathAdv'].forEach(key => {
-      if (studentData.progress?.[key]?.missionSubmitted) mathSubmitted++;
-    });
-
-    // 종합: (수강률 + 퀴즈률 + 미션제출률) / 해당 항목 수
-    const totalItems = totalChapters + totalQuizChapters + mathTotal;
-    const doneItems = watchedChapters + passedQuizChapters + mathSubmitted;
+    const totalItems = totalChapters + totalQuizChapters;
+    const doneItems  = watchedChapters + attemptedQuizChapters;
     const overall = totalItems ? Math.round((doneItems / totalItems) * 100) : 0;
 
     const watchPercent = totalChapters ? Math.round((watchedChapters / totalChapters) * 100) : 0;
-    const quizPercent = totalQuizChapters ? Math.round((passedQuizChapters / totalQuizChapters) * 100) : 0;
+    const quizPercent  = totalQuizChapters ? Math.round((attemptedQuizChapters / totalQuizChapters) * 100) : 0;
 
     return {
       watchedChapters, totalChapters, watchPercent,
-      passedQuizChapters, totalQuizChapters, quizPercent,
-      mathSubmitted, mathTotal,
+      attemptedQuizChapters, totalQuizChapters, quizPercent,
       overall
     };
   }
@@ -100,255 +92,19 @@ const App = (() => {
     return session;
   }
 
-  // 모달 열기/닫기
-  function openModal(modalEl) {
-    modalEl.classList.add('active');
-    document.body.style.overflow = 'hidden';
-  }
-
-  function closeModal(modalEl) {
-    modalEl.classList.remove('active');
-    document.body.style.overflow = '';
-  }
-
-  // ── 수학 표기 자동 변환 ──
-  // 2^3 → 2³, x_1 → x₁, sqrt → √ 등 자동 치환
-  const SUPERSCRIPT_MAP = {
-    '0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹',
-    '+':'⁺','-':'⁻','=':'⁼','(':'⁽',')':'⁾',
-    'n':'ⁿ','i':'ⁱ','x':'ˣ','y':'ʸ','a':'ᵃ','b':'ᵇ','c':'ᶜ','d':'ᵈ','e':'ᵉ',
-    'f':'ᶠ','g':'ᵍ','h':'ʰ','j':'ʲ','k':'ᵏ','l':'ˡ','m':'ᵐ','o':'ᵒ','p':'ᵖ',
-    'r':'ʳ','s':'ˢ','t':'ᵗ','u':'ᵘ','v':'ᵛ','w':'ʷ','z':'ᶻ',
-    'A':'ᴬ','B':'ᴮ','D':'ᴰ','E':'ᴱ','G':'ᴳ','H':'ᴴ','I':'ᴵ','J':'ᴶ','K':'ᴷ',
-    'L':'ᴸ','M':'ᴹ','N':'ᴺ','O':'ᴼ','P':'ᴾ','R':'ᴿ','T':'ᵀ','U':'ᵁ','V':'ⱽ','W':'ᵂ'
-  };
-  const SUBSCRIPT_MAP = {
-    '0':'₀','1':'₁','2':'₂','3':'₃','4':'₄','5':'₅','6':'₆','7':'₇','8':'₈','9':'₉',
-    '+':'₊','-':'₋','=':'₌','(':'₍',')':'₎',
-    'a':'ₐ','e':'ₑ','h':'ₕ','i':'ᵢ','j':'ⱼ','k':'ₖ','l':'ₗ','m':'ₘ','n':'ₙ',
-    'o':'ₒ','p':'ₚ','r':'ᵣ','s':'ₛ','t':'ₜ','u':'ᵤ','v':'ᵥ','x':'ₓ'
-  };
-
-  function convertMathNotation(text) {
-    if (!text) return '';
-
-    // 기호 치환
-    let result = text
-      .replace(/\*\*/g, '^')       // ** → ^ (Python 거듭제곱)
-      .replace(/sqrt\(([^)]+)\)/gi, '√($1)')
-      .replace(/sqrt/gi, '√')
-      .replace(/>=/g, '≥')
-      .replace(/<=/g, '≤')
-      .replace(/!=/g, '≠')
-      .replace(/\+-/g, '±')
-      .replace(/-\+/g, '∓')
-      .replace(/\.\.\./g, '⋯')
-      .replace(/infinity|inf/gi, '∞')
-      .replace(/\bpi\b/gi, 'π')
-      .replace(/\btheta\b/gi, 'θ')
-      .replace(/\balpha\b/gi, 'α')
-      .replace(/\bbeta\b/gi, 'β')
-      .replace(/\bgamma\b/gi, 'γ')
-      .replace(/\bdelta\b/gi, 'δ')
-      .replace(/\bsigma\b/gi, 'σ')
-      .replace(/\blambda\b/gi, 'λ')
-      .replace(/\bmu\b/gi, 'μ')
-      .replace(/\bepsilon\b/gi, 'ε')
-      .replace(/\bomega\b/gi, 'ω')
-      .replace(/\bSUM\b/g, '∑')
-      .replace(/\bsum\b/g, '∑')
-      .replace(/\bint\b/g, '∫')
-      .replace(/\bprod\b/gi, '∏')
-      .replace(/\bin\b/g, '∈')
-      .replace(/\bforall\b/gi, '∀')
-      .replace(/\bexists\b/gi, '∃')
-      .replace(/->/g, '→')
-      .replace(/=>/g, '⇒')
-      .replace(/<=>/g, '⇔');
-
-    // ^{...} 중괄호 그룹 위첨자
-    result = result.replace(/\^\{([^}]+)\}/g, (_, group) => {
-      return group.split('').map(ch => SUPERSCRIPT_MAP[ch] || ch).join('');
-    });
-
-    // ^단일문자 위첨자
-    result = result.replace(/\^([0-9a-zA-Z+\-=()])/g, (_, ch) => {
-      return SUPERSCRIPT_MAP[ch] || '^' + ch;
-    });
-
-    // _{...} 중괄호 그룹 아래첨자
-    result = result.replace(/_\{([^}]+)\}/g, (_, group) => {
-      return group.split('').map(ch => SUBSCRIPT_MAP[ch] || ch).join('');
-    });
-
-    // _단일문자 아래첨자
-    result = result.replace(/_([0-9a-zA-Z+\-=()])/g, (_, ch) => {
-      return SUBSCRIPT_MAP[ch] || '_' + ch;
-    });
-
-    return result;
-  }
-
-  // ChatGPT 복사 보정 (외부 사용 가능)
-  function fixChatGPTLatex(text) {
-    if (!text) return '';
-    // 행렬 등에서 \ + 줄바꿈 → \\ (LaTeX 줄바꿈)
-    let fixed = text.replace(/(\\begin\{[^}]+\}[\s\S]*?\\end\{[^}]+\})/g, (block) => {
-      return block.replace(/\\\n/g, '\\\\\n');
-    });
-    // 멀티라인 $...$ → $$...$$ (display math)
-    fixed = fixed.replace(/\$(?!\$)([\s\S]*?)\$(?!\$)/g, (match, inner) => {
-      if (inner.includes('\n') && (inner.includes('\\begin') || inner.includes('\\frac') || inner.includes('\\sum'))) {
-        return '$$' + inner + '$$';
-      }
-      return match;
-    });
-    // 인라인 행렬에서 \ + 공백 + 숫자 → \\ (행 구분)
-    fixed = fixed.replace(/(\$[^$]*\\begin\{[^}]+\}[^$]*\$)/g, (block) => {
-      return block.replace(/\\\s+(?=\d)/g, '\\\\ ');
-    });
-    return fixed;
-  }
-
-  // 수식을 KaTeX로 직접 렌더링하여 HTML 반환 (모범답안용)
-  function renderMathDirect(text) {
-    if (!text || typeof katex === 'undefined') return escapeHtml(text || '');
-    let fixed = fixChatGPTLatex(text);
-
-    // $$...$$ display math → KaTeX 렌더링
-    fixed = fixed.replace(/\$\$([\s\S]*?)\$\$/g, (_, expr) => {
-      try {
-        return katex.renderToString(expr.trim(), { displayMode: true, throwOnError: false });
-      } catch { return '$$' + expr + '$$'; }
-    });
-
-    // $...$ inline math → KaTeX 렌더링
-    fixed = fixed.replace(/\$([^\n$]+?)\$/g, (_, expr) => {
-      try {
-        return katex.renderToString(expr.trim(), { displayMode: false, throwOnError: false });
-      } catch { return '$' + expr + '$'; }
-    });
-
-    // 나머지 텍스트 HTML 이스케이프 + 줄바꿈
-    fixed = fixed.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    // 위의 replace가 KaTeX 출력의 HTML도 이스케이프하므로 순서 변경 필요
-
-    return fixed;
-  }
-
-  // 수식 포함 텍스트를 안전하게 DOM에 렌더링 (모범답안용)
-  function renderMathToElement(el, text) {
-    if (!text) { el.innerHTML = '<em>비어있음</em>'; return; }
-    if (typeof katex === 'undefined') { el.textContent = text; return; }
-
-    let fixed = fixChatGPTLatex(text);
-
-    // 수식과 텍스트를 분리하여 DOM 구성
-    const parts = [];
-    let lastIdx = 0;
-
-    // $$...$$ (display math)
-    const displayRegex = /\$\$([\s\S]*?)\$\$/g;
-    let m;
-    while ((m = displayRegex.exec(fixed)) !== null) {
-      if (m.index > lastIdx) parts.push({ type: 'text', content: fixed.slice(lastIdx, m.index) });
-      parts.push({ type: 'display', content: m[1].trim() });
-      lastIdx = m.index + m[0].length;
-    }
-    if (lastIdx < fixed.length) parts.push({ type: 'text', content: fixed.slice(lastIdx) });
-
-    // 텍스트 파트에서 $...$ (inline math) 분리
-    const finalParts = [];
-    parts.forEach(p => {
-      if (p.type !== 'text') { finalParts.push(p); return; }
-      const inlineRegex = /\$([^\n$]+?)\$/g;
-      let last = 0, im;
-      while ((im = inlineRegex.exec(p.content)) !== null) {
-        if (im.index > last) finalParts.push({ type: 'text', content: p.content.slice(last, im.index) });
-        finalParts.push({ type: 'inline', content: im[1].trim() });
-        last = im.index + im[0].length;
-      }
-      if (last < p.content.length) finalParts.push({ type: 'text', content: p.content.slice(last) });
-    });
-
-    // DOM 생성
-    el.innerHTML = '';
-    finalParts.forEach(p => {
-      if (p.type === 'display') {
-        const div = document.createElement('div');
-        div.style.margin = '12px 0';
-        div.style.overflowX = 'auto';
-        try { katex.render(p.content, div, { displayMode: true, throwOnError: false }); }
-        catch { div.textContent = '$$' + p.content + '$$'; }
-        el.appendChild(div);
-      } else if (p.type === 'inline') {
-        const span = document.createElement('span');
-        try { katex.render(p.content, span, { displayMode: false, throwOnError: false }); }
-        catch { span.textContent = '$' + p.content + '$'; }
-        el.appendChild(span);
-      } else {
-        // 텍스트: 줄바꿈 보존
-        const lines = p.content.split('\n');
-        lines.forEach((line, i) => {
-          if (i > 0) el.appendChild(document.createElement('br'));
-          if (line) el.appendChild(document.createTextNode(line));
-        });
-      }
-    });
-  }
+  // 모달
+  function openModal(modalEl)  { modalEl.classList.add('active'); document.body.style.overflow = 'hidden'; }
+  function closeModal(modalEl) { modalEl.classList.remove('active'); document.body.style.overflow = ''; }
 
   function escapeHtml(s) {
-    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  }
-
-  // HTML 이스케이프 + 수학 변환 + 줄바꿈 처리
-  // LaTeX 구간($...$, $$...$$, \(...\), \[...\])은 변환하지 않고 보존
-  function renderMathHtml(text) {
-    if (!text) return '';
-
-    let fixed = fixChatGPTLatex(text);
-
-    let escaped = fixed.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-
-    // LaTeX 구간을 플레이스홀더로 치환 후 convertMathNotation 적용
-    const latexBlocks = [];
-    const placeholder = '\x00LATEX';
-
-    // $$...$$ (display math)
-    escaped = escaped.replace(/\$\$[\s\S]*?\$\$/g, (match) => {
-      latexBlocks.push(match);
-      return placeholder + (latexBlocks.length - 1) + '\x00';
-    });
-    // $...$ (inline math, 줄바꿈 없는 것만)
-    escaped = escaped.replace(/\$(?!\$)([^\n$]+?)\$/g, (match) => {
-      latexBlocks.push(match);
-      return placeholder + (latexBlocks.length - 1) + '\x00';
-    });
-    // \[...\] (display)
-    escaped = escaped.replace(/\\\[[\s\S]*?\\\]/g, (match) => {
-      latexBlocks.push(match);
-      return placeholder + (latexBlocks.length - 1) + '\x00';
-    });
-    // \(...\) (inline)
-    escaped = escaped.replace(/\\\([\s\S]*?\\\)/g, (match) => {
-      latexBlocks.push(match);
-      return placeholder + (latexBlocks.length - 1) + '\x00';
-    });
-
-    // LaTeX가 아닌 부분만 수학 기호 변환
-    escaped = convertMathNotation(escaped);
-
-    // 줄바꿈 → <br> (플레이스홀더 복원 전에 적용하여 LaTeX 내부 줄바꿈 보존)
-    escaped = escaped.replace(/\n/g, '<br>');
-
-    // 플레이스홀더 복원 (LaTeX 블록은 원본 줄바꿈 유지)
-    escaped = escaped.replace(/\x00LATEX(\d+)\x00/g, (_, idx) => latexBlocks[parseInt(idx)]);
-
-    return escaped;
+    if (s == null) return '';
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 
   return {
-    showToast, calcProgress, formatDate, logout, requireAuth, openModal, closeModal,
-    convertMathNotation, renderMathHtml, fixChatGPTLatex, renderMathToElement
+    showToast, calcProgress, formatDate,
+    logout, requireAuth,
+    openModal, closeModal,
+    escapeHtml
   };
 })();
