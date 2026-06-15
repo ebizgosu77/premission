@@ -17,6 +17,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   let studentData = Storage.getStudentData(studentName, courseId, cohortId);
   if (!studentData) studentData = Storage.initStudent(studentName, courseId, cohortId);
+  if (!studentData) {
+    // 세션의 courseId/cohortId가 손상되어 학생 데이터를 만들 수 없음 → 로그인 페이지로
+    Storage.clearSession();
+    window.location.href = 'index.html';
+    return;
+  }
   if (Storage.ensureChapters(studentData)) Storage.saveStudentData(studentName, studentData, courseId, cohortId);
 
   const missions = getMissionData();

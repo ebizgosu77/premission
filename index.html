@@ -117,7 +117,11 @@
         if (!validation.valid) { App.showToast(validation.msg, 'warning'); return; }
         const name = validation.name;
 
-        Storage.initStudent(name, courseId, cohortId);
+        const initResult = Storage.initStudent(name, courseId, cohortId);
+        if (!initResult) {
+          App.showToast('과정 또는 기수 값이 올바르지 않습니다.', 'error');
+          return;
+        }
         const data = Storage.getStudentData(name, courseId, cohortId);
         data.lastLogin = new Date().toISOString();
         Storage.saveStudentData(name, data, courseId, cohortId);

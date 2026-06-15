@@ -22,6 +22,47 @@ const Storage = (() => {
   let _onDataChangeCallback = null;
   let _debounceTimer = null;
 
+  // ── 유효성 검증 ──
+  // courseId, cohortId, name이 정상 형태인지 확인.
+  // (손상된 Firebase 데이터가 매니저 화면에 노출되거나 다시 저장되는 것을 방지)
+  function _isValidCourseId(id) {
+    if (typeof COURSES === 'undefined') return typeof id === 'string' && id.length > 0;
+    return typeof id === 'string' && COURSES.some(c => c.id === id);
+  }
+  function _isValidCohortId(id) {
+    if (typeof COHORTS === 'undefined') return typeof id === 'string' && id.length > 0;
+    return typeof id === 'string' && COHORTS.some(c => c.id === id);
+  }
+  function _isValidName(name) {
+    return typeof name === 'string' && name.length > 0 && name.length <= 40;
+  }
+
+  // students 트리에서 정상 구조 부분만 남기고 손상된 가지(잘못된 키, 비객체 노드 등)는 제거한다.
+  // 반환값: { sanitized, changed }
+  function _sanitizeStudentsTree(students) {
+    let changed = false;
+    const out = {};
+    if (!students || typeof students !== 'object') return { sanitized: out, changed: students !== out };
+    Object.keys(students).forEach(cId => {
+      const cohorts = students[cId];
+      if (!_isValidCourseId(cId) || !cohorts || typeof cohorts !== 'object') { changed = true; return; }
+      const cleanedCohorts = {};
+      Object.keys(cohorts).forEach(coId => {
+        const list = cohorts[coId];
+        if (!_isValidCohortId(coId) || !list || typeof list !== 'object') { changed = true; return; }
+        const cleanedList = {};
+        Object.keys(list).forEach(name => {
+          const data = list[name];
+          if (!_isValidName(name) || !data || typeof data !== 'object') { changed = true; return; }
+          cleanedList[name] = data;
+        });
+        if (Object.keys(cleanedList).length > 0) cleanedCohorts[coId] = cleanedList;
+      });
+      if (Object.keys(cleanedCohorts).length > 0) out[cId] = cleanedCohorts;
+    });
+    return { sanitized: out, changed };
+  }
+
   // ── localStorage 헬퍼 ──
   function _getJSON(key, fallback) {
     try {
@@ -81,10 +122,18 @@ const Storage = (() => {
         const mergePromises = [];
 
         if (fbStudents && Object.keys(fbStudents).length > 0) {
-          _cache.students = fbStudents;
+          const { sanitized, changed } = _sanitizeStudentsTree(fbStudents);
+          _cache.students = sanitized;
+          if (changed) {
+            console.warn('[Storage] Firebase students 트리에서 손상 데이터 발견 → 정상 구조만 사용 (Firebase 반영은 매니저의 명시 행동 필요)');
+          }
         } else if (Object.keys(localStudents).length > 0) {
-          _cache.students = localStudents;
-          mergePromises.push(db.ref('students').set(localStudents));
+          // 과거 평탄 구조 잔재 등이 그대로 Firebase에 올라가는 것을 막기 위해 마이그레이션 전에 정화한다.
+          const { sanitized } = _sanitizeStudentsTree(localStudents);
+          _cache.students = sanitized;
+          if (Object.keys(sanitized).length > 0) {
+            mergePromises.push(db.ref('students').set(sanitized));
+          }
         } else {
           _cache.students = {};
         }
@@ -115,7 +164,8 @@ const Storage = (() => {
   }
 
   function _loadFromLocalStorage() {
-    _cache.students = _getJSON(KEYS.STUDENTS, {});
+    const raw = _getJSON(KEYS.STUDENTS, {});
+    _cache.students = _sanitizeStudentsTree(raw).sanitized;
     _cache.managerPw = localStorage.getItem(KEYS.MANAGER_PW) || DEFAULT_MANAGER_PW;
   }
 
@@ -126,7 +176,9 @@ const Storage = (() => {
 
   function _setupListeners() {
     db.ref('students').on('value', snap => {
-      _cache.students = snap.val() || {};
+      const raw = snap.val() || {};
+      const { sanitized } = _sanitizeStudentsTree(raw);
+      _cache.students = sanitized;
       _setJSON(KEYS.STUDENTS, _cache.students);
       _notifyChange();
     });
@@ -160,17 +212,25 @@ const Storage = (() => {
 
   // 평탄화된 학생 배열 — { courseId, cohortId, name, data }
   // 필터 옵션: { courseId, cohortId }
+  // 구조가 어긋난 손상 데이터(잘못된 courseId/cohortId, 객체가 아닌 값 등)는 건너뜀.
   function getFlatStudents(filter = {}) {
     const out = [];
     const courses = _cache.students || {};
     Object.keys(courses).forEach(cId => {
+      if (!_isValidCourseId(cId)) return;
       if (filter.courseId && filter.courseId !== 'all' && cId !== filter.courseId) return;
-      const cohorts = courses[cId] || {};
+      const cohorts = courses[cId];
+      if (!cohorts || typeof cohorts !== 'object') return;
       Object.keys(cohorts).forEach(coId => {
+        if (!_isValidCohortId(coId)) return;
         if (filter.cohortId && filter.cohortId !== 'all' && coId !== filter.cohortId) return;
-        const list = cohorts[coId] || {};
+        const list = cohorts[coId];
+        if (!list || typeof list !== 'object') return;
         Object.keys(list).forEach(name => {
-          out.push({ courseId: cId, cohortId: coId, name, data: list[name] });
+          if (!_isValidName(name)) return;
+          const data = list[name];
+          if (!data || typeof data !== 'object') return;
+          out.push({ courseId: cId, cohortId: coId, name, data });
         });
       });
     });
@@ -182,6 +242,10 @@ const Storage = (() => {
   }
 
   function saveStudentData(name, data, courseId, cohortId) {
+    if (!_isValidCourseId(courseId) || !_isValidCohortId(cohortId) || !_isValidName(name)) {
+      console.error('[Storage] 잘못된 키로 저장 시도 차단:', { courseId, cohortId, name });
+      return;
+    }
     if (!_cache.students[courseId]) _cache.students[courseId] = {};
     if (!_cache.students[courseId][cohortId]) _cache.students[courseId][cohortId] = {};
     _cache.students[courseId][cohortId][name] = data;
@@ -190,6 +254,10 @@ const Storage = (() => {
   }
 
   function initStudent(name, courseId, cohortId) {
+    if (!_isValidCourseId(courseId) || !_isValidCohortId(cohortId) || !_isValidName(name)) {
+      console.error('[Storage] 잘못된 키로 학생 초기화 시도 차단:', { courseId, cohortId, name });
+      return null;
+    }
     const existing = getStudentData(name, courseId, cohortId);
     if (existing) return existing;
 
