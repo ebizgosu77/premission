@@ -5,19 +5,19 @@
 const Storage = (() => {
   const KEYS = {
     STUDENTS: 'aicamp_students',
-    SESSION: 'aicamp_session',
-    MANAGER_PW: 'aicamp_manager_pw'
+    SESSION: 'aicamp_session'
   };
-
-  const DEFAULT_MANAGER_PW = 'aicamp2026';
 
   // ── 인메모리 캐시 ──
   // students: { [courseId]: { [cohortId]: { [name]: data } } }
+  // 매니저 비밀번호는 Firebase Authentication이 직접 관리하므로 여기서 다루지 않음.
   const _cache = {
     students: {},
-    managerPw: DEFAULT_MANAGER_PW,
     _ready: false
   };
+
+  // (호환용) 과거 버전의 매니저 비밀번호 localStorage 키 — 첫 init에서 정리
+  const LEGACY_MANAGER_PW_KEY = 'aicamp_manager_pw';
 
   let _onDataChangeCallback = null;
   let _debounceTimer = null;
@@ -108,16 +108,9 @@ const Storage = (() => {
       );
 
       const load = async () => {
-        const [studentsSnap, settingsSnap] = await Promise.all([
-          db.ref('students').once('value'),
-          db.ref('settings').once('value')
-        ]);
-
+        const studentsSnap = await db.ref('students').once('value');
         const fbStudents = studentsSnap.val();
-        const fbSettings = settingsSnap.val();
-
         const localStudents = _getJSON(KEYS.STUDENTS, {});
-        const localPw = localStorage.getItem(KEYS.MANAGER_PW) || DEFAULT_MANAGER_PW;
 
         const mergePromises = [];
 
@@ -138,17 +131,13 @@ const Storage = (() => {
           _cache.students = {};
         }
 
-        if (fbSettings) {
-          _cache.managerPw = fbSettings.managerPassword || DEFAULT_MANAGER_PW;
-        } else {
-          _cache.managerPw = localPw;
-          mergePromises.push(db.ref('settings').set({ managerPassword: localPw }));
-        }
-
         if (mergePromises.length > 0) {
           await Promise.all(mergePromises);
           console.log('localStorage → Firebase 마이그레이션 완료');
         }
+
+        // 과거 버전이 남긴 매니저 비밀번호 로컬 키 정리 (Firebase Auth 이관 후 불필요)
+        localStorage.removeItem(LEGACY_MANAGER_PW_KEY);
 
         _backupToLocalStorage();
       };
@@ -166,12 +155,10 @@ const Storage = (() => {
   function _loadFromLocalStorage() {
     const raw = _getJSON(KEYS.STUDENTS, {});
     _cache.students = _sanitizeStudentsTree(raw).sanitized;
-    _cache.managerPw = localStorage.getItem(KEYS.MANAGER_PW) || DEFAULT_MANAGER_PW;
   }
 
   function _backupToLocalStorage() {
     _setJSON(KEYS.STUDENTS, _cache.students);
-    localStorage.setItem(KEYS.MANAGER_PW, _cache.managerPw);
   }
 
   function _setupListeners() {
@@ -180,13 +167,6 @@ const Storage = (() => {
       const { sanitized } = _sanitizeStudentsTree(raw);
       _cache.students = sanitized;
       _setJSON(KEYS.STUDENTS, _cache.students);
-      _notifyChange();
-    });
-
-    db.ref('settings').on('value', snap => {
-      const s = snap.val() || {};
-      _cache.managerPw = s.managerPassword || DEFAULT_MANAGER_PW;
-      localStorage.setItem(KEYS.MANAGER_PW, _cache.managerPw);
       _notifyChange();
     });
   }
@@ -338,23 +318,13 @@ const Storage = (() => {
   function clearSession() { localStorage.removeItem(KEYS.SESSION); }
 
   // ──────────────────────────────────────────────
-  //  매니저 비밀번호
-  // ──────────────────────────────────────────────
-  function getManagerPassword() { return _cache.managerPw || DEFAULT_MANAGER_PW; }
-  function validateManager(pw)  { return pw === getManagerPassword(); }
-  function setManagerPassword(newPw) {
-    _cache.managerPw = newPw;
-    localStorage.setItem(KEYS.MANAGER_PW, newPw);
-    _fbSet('settings/managerPassword', newPw);
-  }
-
-  // ──────────────────────────────────────────────
   //  전체 초기화
   // ──────────────────────────────────────────────
+  // students 데이터만 비우고 매니저 계정(Firebase Auth)은 건드리지 않는다.
   function clearAllData() {
     _cache.students = {};
-    _cache.managerPw = DEFAULT_MANAGER_PW;
     Object.values(KEYS).forEach(k => localStorage.removeItem(k));
+    localStorage.removeItem(LEGACY_MANAGER_PW_KEY);
     if (typeof db !== 'undefined') {
       db.ref('students').remove();
       db.ref('settings').remove();
@@ -372,7 +342,6 @@ const Storage = (() => {
     getStudentData, saveStudentData, initStudent,
     ensureChapters, deleteStudent, validateName,
     setSession, getSession, clearSession,
-    getManagerPassword, validateManager, setManagerPassword,
     clearAllData
   };
 })();

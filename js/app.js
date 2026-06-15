@@ -76,18 +76,44 @@ const App = (() => {
     return `${mm}/${dd} ${hh}:${min}`;
   }
 
+  // Firebase Auth 상태가 결정될 때까지 한 번만 기다린다.
+  // 반환값: firebase.User | null
+  function waitForFirebaseAuthUser() {
+    return new Promise((resolve) => {
+      if (typeof firebase === 'undefined' || !firebase.auth) { resolve(null); return; }
+      const unsubscribe = firebase.auth().onAuthStateChanged((user) => {
+        unsubscribe();
+        resolve(user || null);
+      });
+    });
+  }
+
   // 로그아웃
-  function logout() {
+  async function logout() {
+    try {
+      if (typeof firebase !== 'undefined' && firebase.auth) {
+        await firebase.auth().signOut();
+      }
+    } catch (_) { /* signOut 실패해도 로컬 정리는 진행 */ }
     Storage.clearSession();
     window.location.href = 'index.html';
   }
 
-  // 인증 체크
-  function requireAuth(role) {
+  // 인증 체크 (비동기) — 매니저는 Firebase Auth 상태까지 확인한다.
+  async function requireAuth(role) {
     const session = Storage.getSession();
     if (!session || session.role !== role) {
       window.location.href = 'index.html';
       return null;
+    }
+    if (role === 'manager') {
+      const user = await waitForFirebaseAuthUser();
+      if (!user) {
+        Storage.clearSession();
+        window.location.href = 'index.html';
+        return null;
+      }
+      session.email = user.email;
     }
     return session;
   }
@@ -103,7 +129,7 @@ const App = (() => {
 
   return {
     showToast, calcProgress, formatDate,
-    logout, requireAuth,
+    logout, requireAuth, waitForFirebaseAuthUser,
     openModal, closeModal,
     escapeHtml
   };

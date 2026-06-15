@@ -4,7 +4,7 @@
  */
 document.addEventListener('DOMContentLoaded', async () => {
   await Storage.init();
-  const session = App.requireAuth('student');
+  const session = await App.requireAuth('student');
   if (!session) return;
 
   const { name: studentName, courseId, cohortId } = session;

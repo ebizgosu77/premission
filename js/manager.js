@@ -4,7 +4,7 @@
  */
 document.addEventListener('DOMContentLoaded', async () => {
   await Storage.init();
-  const session = App.requireAuth('manager');
+  const session = await App.requireAuth('manager');
   if (!session) return;
 
   const missions = getMissionData();
@@ -402,20 +402,47 @@ document.addEventListener('DOMContentLoaded', async () => {
       </div>
     `;
 
-    document.getElementById('changePwBtn').addEventListener('click', () => {
+    document.getElementById('changePwBtn').addEventListener('click', async () => {
       const current = document.getElementById('currentPw').value;
       const newPw = document.getElementById('newPw').value;
       const confirmPw = document.getElementById('confirmPw').value;
 
-      if (!Storage.validateManager(current)) { App.showToast('현재 비밀번호가 올바르지 않습니다.', 'error'); return; }
-      if (!newPw || newPw.length < 4)        { App.showToast('새 비밀번호는 4자 이상이어야 합니다.', 'warning'); return; }
-      if (newPw !== confirmPw)               { App.showToast('새 비밀번호가 일치하지 않습니다.', 'error'); return; }
+      if (!current)                  { App.showToast('현재 비밀번호를 입력해주세요.', 'warning'); return; }
+      if (!newPw || newPw.length < 6) { App.showToast('새 비밀번호는 6자 이상이어야 합니다.', 'warning'); return; }
+      if (newPw !== confirmPw)        { App.showToast('새 비밀번호가 일치하지 않습니다.', 'error'); return; }
 
-      Storage.setManagerPassword(newPw);
-      App.showToast('비밀번호가 변경되었습니다.', 'success');
-      document.getElementById('currentPw').value = '';
-      document.getElementById('newPw').value = '';
-      document.getElementById('confirmPw').value = '';
+      const user = firebase.auth().currentUser;
+      if (!user || !user.email) {
+        App.showToast('인증 정보가 없습니다. 다시 로그인해주세요.', 'error');
+        App.logout();
+        return;
+      }
+
+      const btn = document.getElementById('changePwBtn');
+      btn.disabled = true;
+      try {
+        const credential = firebase.auth.EmailAuthProvider.credential(user.email, current);
+        await user.reauthenticateWithCredential(credential);
+        await user.updatePassword(newPw);
+        App.showToast('비밀번호가 변경되었습니다.', 'success');
+        document.getElementById('currentPw').value = '';
+        document.getElementById('newPw').value = '';
+        document.getElementById('confirmPw').value = '';
+      } catch (err) {
+        console.warn('[Auth] 비밀번호 변경 실패:', err.code, err.message);
+        if (err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+          App.showToast('현재 비밀번호가 올바르지 않습니다.', 'error');
+        } else if (err.code === 'auth/weak-password') {
+          App.showToast('새 비밀번호가 너무 약합니다.', 'warning');
+        } else if (err.code === 'auth/requires-recent-login') {
+          App.showToast('보안을 위해 다시 로그인해주세요.', 'warning');
+          App.logout();
+        } else {
+          App.showToast('비밀번호 변경에 실패했습니다.', 'error');
+        }
+      } finally {
+        btn.disabled = false;
+      }
     });
 
     document.getElementById('resetAllBtn').addEventListener('click', () => {
@@ -423,7 +450,8 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (!window.confirm('⚠️ 2단계 최종 확인\n\n이 작업은 되돌릴 수 없습니다.\n정말로 모든 데이터를 삭제하시겠습니까?')) return;
 
       Storage.clearAllData();
-      Storage.setSession('manager', 'admin');
+      const user = firebase.auth().currentUser;
+      Storage.setSession('manager', user?.email || 'manager');
       App.showToast('모든 데이터가 초기화되었습니다.', 'success');
       renderPage();
     });

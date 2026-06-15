@@ -12,6 +12,7 @@
   <link rel="stylesheet" href="css/style.css?v=3">
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 </head>
 <body class="login-page">
   <div class="login-container">
@@ -60,8 +61,12 @@
         <p>전 과정·기수의 수강생 현황을 한 곳에서 관리합니다.</p>
         <form id="managerForm" class="login-form">
           <div class="input-group">
+            <label class="field-label" for="managerEmail">이메일</label>
+            <input type="email" id="managerEmail" placeholder="매니저 이메일" required autocomplete="username">
+          </div>
+          <div class="input-group">
             <label class="field-label" for="managerPw">비밀번호</label>
-            <input type="password" id="managerPw" placeholder="비밀번호를 입력하세요" required>
+            <input type="password" id="managerPw" placeholder="비밀번호를 입력하세요" required autocomplete="current-password">
           </div>
           <button type="submit" class="btn btn-primary btn-block btn-lg">입장하기</button>
         </form>
@@ -85,7 +90,12 @@
       const session = Storage.getSession();
       if (session) {
         if (session.role === 'student') { window.location.href = 'student.html'; return; }
-        if (session.role === 'manager') { window.location.href = 'manager.html'; return; }
+        if (session.role === 'manager') {
+          // 매니저 세션은 Firebase Auth 상태까지 유효해야 의미가 있음. 비유효 시 세션 정리.
+          const user = await App.waitForFirebaseAuthUser();
+          if (user) { window.location.href = 'manager.html'; return; }
+          Storage.clearSession();
+        }
       }
 
       // ─── 과정 / 기수 셀렉트 채우기
@@ -130,15 +140,24 @@
         window.location.href = 'student.html';
       });
 
-      // ─── 매니저 로그인
-      document.getElementById('managerForm').addEventListener('submit', (e) => {
+      // ─── 매니저 로그인 (Firebase Authentication)
+      document.getElementById('managerForm').addEventListener('submit', async (e) => {
         e.preventDefault();
-        const pw = document.getElementById('managerPw').value;
-        if (Storage.validateManager(pw)) {
-          Storage.setSession('manager', 'admin');
+        const email = document.getElementById('managerEmail').value.trim();
+        const pw    = document.getElementById('managerPw').value;
+        if (!email || !pw) { App.showToast('이메일과 비밀번호를 입력해주세요.', 'warning'); return; }
+
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        if (submitBtn) submitBtn.disabled = true;
+        try {
+          await firebase.auth().signInWithEmailAndPassword(email, pw);
+          Storage.setSession('manager', email);
           window.location.href = 'manager.html';
-        } else {
-          App.showToast('비밀번호가 올바르지 않습니다.', 'error');
+        } catch (err) {
+          console.warn('[Auth] 매니저 로그인 실패:', err.code, err.message);
+          App.showToast('이메일 또는 비밀번호가 올바르지 않습니다.', 'error');
+        } finally {
+          if (submitBtn) submitBtn.disabled = false;
         }
       });
     });
